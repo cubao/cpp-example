@@ -1,4 +1,5 @@
 PROJECT_SOURCE_DIR ?= $(abspath ./)
+PROJECT_NAME ?= $(basename $(PROJECT_SOURCE_DIR))
 BUILD_DIR ?= $(PROJECT_SOURCE_DIR)/build
 INSTALL_DIR ?= $(BUILD_DIR)/install
 NUM_JOB ?= 8
@@ -42,8 +43,9 @@ test: data_pull
 
 tar.gz:
 	cd .. && \
-	tar -cvz --exclude .git -f $(PACKAGE_NAME).tar.gz -C $(PACKAGE_NAME) `ls $(PACKAGE_NAME)` && \
-	ls -alh $(PACKAGE_NAME).tar.gz
+	tar -cvz --exclude .git -f $(PROJECT_NAME).tar.gz -C $(PROJECT_NAME) `ls $(PROJECT_NAME)` && \
+	ls -alh $(PROJECT_NAME).tar.gz
+.PHONY: tar.gz
 
 # https://stackoverflow.com/a/25817631
 echo-%  : ; @echo -n $($*)
