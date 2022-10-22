@@ -1,9 +1,7 @@
 // based on https://github.com/mapbox/cheap-ruler-cpp
 #pragma once
 
-#include <mapbox/geometry/box.hpp>
-#include <mapbox/geometry/multi_line_string.hpp>
-#include <mapbox/geometry/polygon.hpp>
+#include <Eigen/Core>
 
 #include <cassert>
 #include <cmath>
@@ -13,17 +11,19 @@
 #include <tuple>
 #include <utility>
 
-namespace mapbox
+namespace cubao
 {
+using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
+
 namespace cheap_ruler
 {
 
-using box = geometry::box<double>;
-using line_string = geometry::line_string<double>;
-using linear_ring = geometry::linear_ring<double>;
-using multi_line_string = geometry::multi_line_string<double>;
-using point = geometry::point<double>;
-using polygon = geometry::polygon<double>;
+using box = std::pair<Eigen::Vector3d, Eigen::Vector3d>;
+using line_string = RowVectors;
+using linear_ring = RowVectors;
+using multi_line_string = RowVectors;
+using point = Eigen::Vector3d;
+using polygon = RowVectors;
 
 class CheapRuler
 {
@@ -52,14 +52,14 @@ class CheapRuler
     // delta(lon) * kx -> delta east/west in your metric/unit (e.g. meters)
     // delta(lat) * ky -> delta north/south in your metric/unit (e.g. meters)
     // delta(alt) * kz -> delta up/down in your metric/unit (e.g. meters)
-    std::array<double, 3> k() const { return {kx, ky, kz}; }
+    Eigen::Vector3d k() const { return Eigen::Vector3d(kx, ky, kz); }
 
     //
     // A collection of very fast approximations to common geodesic measurements.
     // Useful for performance-sensitive code that measures things on a city
     // scale. Point coordinates are in the [x = longitude, y = latitude] form.
     //
-    explicit CheapRuler(double latitude, Unit unit = Kilometers)
+    explicit CheapRuler(double latitude, Unit unit = Meters)
     {
         double m = 0.;
 
@@ -112,17 +112,17 @@ class CheapRuler
 
     point delta(point lla0, point lla1) const
     {
-        auto dx = longDiff(lla1.x, lla0.x) * kx;
-        auto dy = (lla1.y - lla0.y) * ky;
-        auto dz = (lla1.z - lla0.z) * kz;
+        auto dx = longDiff(lla1[0], lla0[0]) * kx;
+        auto dy = (lla1[1] - lla0[1]) * ky;
+        auto dz = (lla1[2] - lla0[2]) * kz;
         return point(dx, dy, dz);
     }
 
     double squareDistance(point a, point b) const
     {
-        auto dx = longDiff(a.x, b.x) * kx;
-        auto dy = (a.y - b.y) * ky;
-        auto dz = (a.z - b.z) * kz;
+        auto dx = longDiff(a[0], b[0]) * kx;
+        auto dy = (a[1] - b[1]) * ky;
+        auto dz = (a[2] - b[2]) * kz;
         return dx * dx + dy * dy + dz * dz;
     }
 
@@ -144,8 +144,8 @@ class CheapRuler
     //       180
     double bearing(point a, point b) const
     {
-        auto dx = longDiff(b.x, a.x) * kx;
-        auto dy = (b.y - a.y) * ky;
+        auto dx = longDiff(b[0], a[0]) * kx;
+        auto dy = (b[1] - a[1]) * ky;
 
         return std::atan2(dx, dy) / RAD;
     }
@@ -166,8 +166,7 @@ class CheapRuler
     //
     point offset(point origin, double dx, double dy, double dz = 0) const
     {
-        return point(origin.x + dx / kx, origin.y + dy / ky,
-                     origin.z + dz / kz);
+        return origin + point(dx / kx, dy / ky, dz / kz);
     }
 
     //
@@ -177,8 +176,8 @@ class CheapRuler
     {
         double total = 0.;
 
-        for (size_t i = 1; i < points.size(); ++i) {
-            total += distance(points[i - 1], points[i]);
+        for (int i = 1; i < points.rows(); ++i) {
+            total += distance(points.row(i - 1), points.row(i));
         }
 
         return total;
@@ -188,18 +187,12 @@ class CheapRuler
     // Given a polygon (an array of rings, where each ring is an array of
     // points), returns the area.
     //
-    double area(polygon poly) const
+    double area(polygon ring) const
     {
         double sum = 0.;
 
-        for (unsigned i = 0; i < poly.size(); ++i) {
-            auto &ring = poly[i];
-
-            for (unsigned j = 0, len = ring.size(), k = len - 1; j < len;
-                 k = j++) {
-                sum += longDiff(ring[j].x, ring[k].x) *
-                       (ring[j].y + ring[k].y) * (i ? -1. : 1.);
-            }
+        for (unsigned j = 0, len = ring.rows(), k = len - 1; j < len; k = j++) {
+            sum += longDiff(ring(j, 0), ring(k, 0)) * (ring(j, 1) + ring(k, 1));
         }
 
         return (std::abs(sum) / 2.) * kx * ky;
@@ -212,17 +205,17 @@ class CheapRuler
     {
         double sum = 0.;
 
-        if (line.empty()) {
+        if (!line.rows()) {
             return {};
         }
 
         if (dist <= 0.) {
-            return line[0];
+            return line.row(0);
         }
 
-        for (unsigned i = 0; i < line.size() - 1; ++i) {
-            auto p0 = line[i];
-            auto p1 = line[i + 1];
+        for (unsigned i = 0; i < line.rows() - 1; ++i) {
+            auto p0 = line.row(i);
+            auto p1 = line.row(i + 1);
             auto d = distance(p0, p1);
 
             sum += d;
@@ -232,7 +225,7 @@ class CheapRuler
             }
         }
 
-        return line[line.size() - 1];
+        return line.row(line.rows() - 1);
     }
 
     //
@@ -242,22 +235,22 @@ class CheapRuler
                                   const point &b) const
     {
         auto t = 0.0;
-        auto x = a.x;
-        auto y = a.y;
-        auto z = a.z;
-        auto dx = longDiff(b.x, x) * kx;
-        auto dy = (b.y - y) * ky;
-        auto dz = (b.z - z) * kz;
+        auto x = a[0];
+        auto y = a[1];
+        auto z = a[2];
+        auto dx = longDiff(b[0], x) * kx;
+        auto dy = (b[1] - y) * ky;
+        auto dz = (b[2] - z) * kz;
 
         if (dx != 0.0 || dy != 0.0 || dz != 0.0) {
             // t = DOT(ap, ab)
-            t = (longDiff(p.x, x) * kx * dx + (p.y - y) * ky * dy +
-                 (p.z - z) * kz * dz) /
+            t = (longDiff(p[0], x) * kx * dx + (p[1] - y) * ky * dy +
+                 (p[2] - z) * kz * dz) /
                 (dx * dx + dy * dy + dz * dz);
             if (t > 1.0) {
-                x = b.x;
-                y = b.y;
-                z = b.z;
+                x = b[0];
+                y = b[1];
+                z = b[2];
             } else if (t > 0.0) {
                 x += (dx / kx) * t;
                 y += (dy / ky) * t;
@@ -273,34 +266,34 @@ class CheapRuler
     // segment with the closest point, and t is a parameter from 0 to 1 that
     // indicates where the closest point is on that segment.
     //
-    std::tuple<point, unsigned, double> pointOnLine(const line_string &line,
-                                                    point p) const
+    std::tuple<point, int, double> pointOnLine(const line_string &line,
+                                               point p) const
     {
         double minDist = std::numeric_limits<double>::infinity();
         double minX = 0., minY = 0., minZ = 0, minI = 0., minT = 0.;
 
-        if (line.empty()) {
-            return std::make_tuple(point(), 0., 0.);
+        if (!line.rows()) {
+            return std::make_tuple(point(), -1, 0.);
         }
 
-        for (unsigned i = 0; i < line.size() - 1; ++i) {
+        for (unsigned i = 0; i < line.rows() - 1; ++i) {
             auto t = 0.;
-            auto x = line[i].x;
-            auto y = line[i].y;
-            auto z = line[i].z;
-            auto dx = longDiff(line[i + 1].x, x) * kx;
-            auto dy = (line[i + 1].y - y) * ky;
-            auto dz = (line[i + 1].z - z) * kz;
+            auto x = line(i, 0);
+            auto y = line(i, 1);
+            auto z = line(i, 2);
+            auto dx = longDiff(line(i + 1, 0), x) * kx;
+            auto dy = (line(i + 1, 1) - y) * ky;
+            auto dz = (line(i + 1, 2) - z) * kz;
 
             if (dx != 0. || dy != 0. || dz != 0.) {
                 // t = DOT(ap, ab)
-                t = (longDiff(p.x, x) * kx * dx + (p.y - y) * ky * dy +
-                     (p.z - z) * kz * dz) /
+                t = (longDiff(p[0], x) * kx * dx + (p[1] - y) * ky * dy +
+                     (p[2] - z) * kz * dz) /
                     (dx * dx + dy * dy + dz * dz);
                 if (t > 1) {
-                    x = line[i + 1].x;
-                    y = line[i + 1].y;
-                    z = line[i + 1].z;
+                    x = line(i + 1, 0);
+                    y = line(i + 1, 1);
+                    z = line(i + 1, 2);
                 } else if (t > 0) {
                     x += (dx / kx) * t;
                     y += (dy / ky) * t;
@@ -328,12 +321,13 @@ class CheapRuler
     // Returns a part of the given line between the start and the stop points
     // (or their closest points on the line).
     //
+    /*
     line_string lineSlice(point start, point stop,
                           const line_string &line) const
     {
-        auto getPoint = [](auto tuple) { return std::get<0>(tuple); };
-        auto getIndex = [](auto tuple) { return std::get<1>(tuple); };
-        auto getT = [](auto tuple) { return std::get<2>(tuple); };
+        auto getPoint = [](auto &tuple) { return std::get<0>(tuple); };
+        auto getIndex = [](auto &tuple) { return std::get<1>(tuple); };
+        auto getT = [](auto &tuple) { return std::get<2>(tuple); };
 
         auto p1 = pointOnLine(line, start);
         auto p2 = pointOnLine(line, stop);
@@ -345,39 +339,41 @@ class CheapRuler
             p2 = tmp;
         }
 
-        line_string slice = {getPoint(p1)};
+        std::vector<Eigen::Vector3d> slice = {getPoint(p1)};
 
         auto l = getIndex(p1) + 1;
         auto r = getIndex(p2);
 
-        if (line[l] != slice[0] && l <= r) {
-            slice.push_back(line[l]);
+        if (line.row(l) != slice[0] && l <= r) {
+            slice.push_back(line.row(l));
         }
 
-        for (unsigned i = l + 1; i <= r; ++i) {
-            slice.push_back(line[i]);
+        for (int i = l + 1; i <= r; ++i) {
+            slice.push_back(line.row(i));
         }
 
-        if (line[r] != getPoint(p2)) {
+        if (line.row(r) != getPoint(p2)) {
             slice.push_back(getPoint(p2));
         }
 
-        return slice;
-    };
+        return line_string::Map(slice[0].data(), (Eigen::Index)slice.size());
+    }
+    */
 
     //
     // Returns a part of the given line between the start and the stop points
     // indicated by distance along the line.
     //
+    /*
     line_string lineSliceAlong(double start, double stop,
                                const line_string &line) const
     {
         double sum = 0.;
-        line_string slice;
+        std::vector<Eigen::Vector3d> slice;
 
-        for (size_t i = 1; i < line.size(); ++i) {
-            auto p0 = line[i - 1];
-            auto p1 = line[i];
+        for (int i = 1; i < line.rows(); ++i) {
+            auto p0 = line.row(i - 1);
+            auto p1 = line.row(i);
             auto d = distance(p0, p1);
 
             sum += d;
@@ -388,7 +384,8 @@ class CheapRuler
 
             if (sum >= stop) {
                 slice.push_back(interpolate(p0, p1, (stop - (sum - d)) / d));
-                return slice;
+                return line_string::Map(slice[0].data(),
+    (Eigen::Index)slice.size());
             }
 
             if (sum > start) {
@@ -396,8 +393,9 @@ class CheapRuler
             }
         }
 
-        return slice;
-    };
+        return line_string::Map(slice[0].data(), (Eigen::Index)slice.size());
+    }
+    */
 
     //
     // Given a point, returns a bounding box object ([w, s, e, n])
@@ -409,8 +407,8 @@ class CheapRuler
         auto h = buffer / kx;
         auto e = buffer / kz;
 
-        return box(point(p.x - h, p.y - v, p.z - e),
-                   point(p.x + h, p.y + v, p.z + e));
+        return box(point(p[0] - h, p[1] - v, p[2] - e),
+                   point(p[0] + h, p[1] + v, p[2] + e));
     }
 
     //
@@ -422,8 +420,9 @@ class CheapRuler
         auto h = buffer / kx;
         auto e = buffer / kz;
 
-        return box(point(bbox.min.x - h, bbox.min.y - v, bbox.min.z - e),
-                   point(bbox.max.x + h, bbox.max.y + v, bbox.max.z + e));
+        return box(
+            point(bbox.first[0] - h, bbox.first[1] - v, bbox.first[2] - e),
+            point(bbox.second[0] + h, bbox.second[1] + v, bbox.second[2] + e));
     }
 
     //
@@ -432,22 +431,22 @@ class CheapRuler
     //
     static bool insideBBox(point p, box bbox, bool check_z = false)
     {
-        bool inside2d = p.y >= bbox.min.y && p.y <= bbox.max.y &&
-                        longDiff(p.x, bbox.min.x) >= 0 &&
-                        longDiff(p.x, bbox.max.x) <= 0;
+        bool inside2d = p[1] >= bbox.first[1] && p[1] <= bbox.second[1] &&
+                        longDiff(p[0], bbox.first[0]) >= 0 &&
+                        longDiff(p[0], bbox.second[0]) <= 0;
         if (!check_z) {
             return inside2d;
         }
-        return inside2d && bbox.min.z <= p.z && p.z <= bbox.max.z;
+        return inside2d && bbox.first[2] <= p[2] && p[2] <= bbox.second[2];
     }
 
     static point interpolate(point a, point b, double t)
     {
-        double dx = longDiff(b.x, a.x);
-        double dy = b.y - a.y;
-        double dz = b.z - a.z;
+        double dx = longDiff(b[0], a[0]);
+        double dy = b[1] - a[1];
+        double dz = b[2] - a[2];
 
-        return point(a.x + dx * t, a.y + dy * t, a.z + dz * t);
+        return point(a[0] + dx * t, a[1] + dy * t, a[2] + dz * t);
     }
 
   private:
@@ -461,4 +460,4 @@ class CheapRuler
 };
 
 } // namespace cheap_ruler
-} // namespace mapbox
+} // namespace cubao
