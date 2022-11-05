@@ -17,6 +17,33 @@ using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
 using RowVectorsNx3 = RowVectors;
 using RowVectorsNx2 = Eigen::Matrix<double, Eigen::Dynamic, 2, Eigen::RowMajor>;
 
+using CheapRuler = mapbox::cheap_ruler::CheapRuler;
+inline RowVectors lla2enu_cheap(const Eigen::Ref<const RowVectors> &llas,
+                                tl::optional<Eigen::Vector3d> lla = {})
+{
+    if (!lla) {
+        lla = llas.row(0);
+    }
+    auto k = CheapRuler::k((*lla)[1], CheapRuler::Unit::Meters);
+    RowVectors enus = llas;
+    for (int i = 0; i < 3; ++i) {
+        enus.col(i).array() -= (*lla)[i];
+        enus.col(i).array() *= k[i];
+    }
+    return enus;
+}
+inline RowVectors enu2lla_cheap(const Eigen::Ref<const RowVectors> &enus,
+                                const Eigen::Vector3d &lla)
+{
+    auto k = CheapRuler::k(lla[1], CheapRuler::Unit::Meters);
+    RowVectors llas = enus;
+    for (int i = 0; i < 3; ++i) {
+        llas.col(i).array() /= k[i];
+        llas.col(i).array() += lla[i];
+    }
+    return llas;
+}
+
 // https://github.com/anvaka/isect/blob/80832e75bf8f197845e52ea52c6ca72935abb24a/build/isect.js#L869
 // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/1968345#1968345
 // https://coliru.stacked-crooked.com/a/624e6e0eabc8a103
@@ -169,11 +196,4 @@ struct PolylineRuler
                                        bool is_wgs84 = false);
 };
 
-namespace utils
-{
-RowVectors lla2enu_cheap(const Eigen::Ref<const RowVectors> &llas,
-                         tl::optional<Eigen::Vector3d> lla = {});
-RowVectors enu2lla_cheap(const Eigen::Ref<const RowVectors> &enus,
-                         const Eigen::Vector3d &lla);
-} // namespace utils
 } // namespace cubao
