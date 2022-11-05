@@ -16,6 +16,7 @@
 #include <array>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 namespace cubao
 {
@@ -332,13 +333,16 @@ class CheapRuler
     // Returns a part of the given line between the start and the stop points
     // (or their closest points on the line).
     //
-    /*
     line_string lineSlice(point start, point stop,
                           const line_string &line) const
     {
-        auto getPoint = [](auto &tuple) { return std::get<0>(tuple); };
-        auto getIndex = [](auto &tuple) { return std::get<1>(tuple); };
-        auto getT = [](auto &tuple) { return std::get<2>(tuple); };
+        auto getPoint = [](auto &tuple) -> const Eigen::Vector3d & {
+            return std::get<0>(tuple);
+        };
+        auto getIndex = [](auto &tuple) -> int { return std::get<1>(tuple); };
+        auto getT = [](auto &tuple) -> double { return std::get<2>(tuple); };
+        auto same_point = [](const Eigen::Vector3d &p1,
+                             const Eigen::Vector3d &p2) { return p1 == p2; };
 
         auto p1 = pointOnLine(line, start);
         auto p2 = pointOnLine(line, stop);
@@ -350,12 +354,12 @@ class CheapRuler
             p2 = tmp;
         }
 
-        std::vector<Eigen::Vector3d> slice = {getPoint(p1)};
+        auto slice = std::vector<Eigen::Vector3d>{getPoint(p1)};
 
         auto l = getIndex(p1) + 1;
         auto r = getIndex(p2);
 
-        if (line.row(l) != slice[0] && l <= r) {
+        if (!same_point(line.row(l), slice[0]) && l <= r) {
             slice.push_back(line.row(l));
         }
 
@@ -363,13 +367,12 @@ class CheapRuler
             slice.push_back(line.row(i));
         }
 
-        if (line.row(r) != getPoint(p2)) {
+        if (!same_point(line.row(r), getPoint(p2))) {
             slice.push_back(getPoint(p2));
         }
 
-        return line_string::Map(slice[0].data(), (Eigen::Index)slice.size());
+        return line_string::Map(slice[0].data(), (Eigen::Index)slice.size(), 3);
     }
-    */
 
     //
     // Returns a part of the given line between the start and the stop points
