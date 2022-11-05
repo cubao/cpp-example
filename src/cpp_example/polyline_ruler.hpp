@@ -9,6 +9,66 @@
 #include <Eigen/Core>
 #include "tl/optional.hpp"
 
+#include "cheap_ruler.hpp"
+
+namespace cubao
+{
+using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
+using RowVectorsNx3 = RowVectors;
+using RowVectorsNx2 = Eigen::Matrix<double, Eigen::Dynamic, 2, Eigen::RowMajor>;
+
+// https://github.com/anvaka/isect/blob/80832e75bf8f197845e52ea52c6ca72935abb24a/build/isect.js#L869
+// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/1968345#1968345
+// https://coliru.stacked-crooked.com/a/624e6e0eabc8a103
+// returns [[x, y], t, s]
+// Note that: won't handle seg1 == seg2
+inline tl::optional<std::tuple<Eigen::Vector2d, double, double>>
+intersect_segments(const Eigen::Vector2d &a1, const Eigen::Vector2d &a2,
+                   const Eigen::Vector2d &b1, const Eigen::Vector2d &b2)
+{
+    double p0_x = a1[0], p0_y = a1[1];
+    double p2_x = b1[0], p2_y = b1[1];
+    double s1_x = a2[0] - a1[0];
+    double s1_y = a2[1] - a1[1];
+    double s2_x = b2[0] - b1[0];
+    double s2_y = b2[1] - b1[1];
+    double div = s1_x * s2_y - s2_x * s1_y;
+    if (div == 0.0) {
+        return {};
+    }
+    double inv = 1.0 / div;
+    double s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) * inv;
+    if (s < 0.0 || s > 1.0) {
+        return {};
+    }
+    double t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) * inv;
+    if (t < 0.0 || t > 1.0) {
+        return {};
+    }
+    return std::make_tuple(
+        Eigen::Vector2d(p0_x + (t * s1_x), p0_y + (t * s1_y)), t, s);
+}
+
+inline tl::optional<std::tuple<Eigen::Vector3d, double, double>>
+intersect_segments(const Eigen::Vector3d &a1, const Eigen::Vector3d &a2,
+                   const Eigen::Vector3d &b1, const Eigen::Vector3d &b2)
+{
+    Eigen::Vector2d A1 = a1.head(2);
+    Eigen::Vector2d A2 = a2.head(2);
+    Eigen::Vector2d B1 = b1.head(2);
+    Eigen::Vector2d B2 = b2.head(2);
+    auto ret = intersect_segments(A1, A2, B1, B2);
+    if (!ret) {
+        return {};
+    }
+    double t = std::get<1>(*ret);
+    double s = std::get<2>(*ret);
+    double ha = a1[2] * (1.0 - t) + a2[2] * t;
+    double hb = b1[2] * (1.0 - s) + b2[2] * s;
+    const Eigen::Vector2d &p = std::get<0>(*ret);
+    return std::make_tuple(Eigen::Vector3d(p[0], p[1], (ha + hb) / 2.0), t, s);
+}
+
 // https://github.com/cubao/pybind11-rdp/blob/master/src/main.cpp
 struct LineSegment
 {
@@ -36,14 +96,14 @@ struct LineSegment
     {
         return std::sqrt(distance2(P));
     }
+
+    tl::optional<std::tuple<Eigen::Vector3d, double, double>>
+    intersects(const LineSegment &other)
+    {
+        return intersect_segments(A, B, other.A, other.B);
+    }
 };
 
-using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
-using RowVectorsNx3 = RowVectors;
-using RowVectorsNx2 = Eigen::Matrix<double, Eigen::Dynamic, 2, Eigen::RowMajor>;
-
-namespace cubao
-{
 struct PolylineRuler
 {
   private:
