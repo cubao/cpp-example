@@ -7,6 +7,7 @@
 #endif
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 namespace cubao
 {
@@ -115,6 +116,71 @@ inline Eigen::Vector3d lla2ecef(double lon, double lat, double alt)
 }
 
 using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
-RowVectors ecef2lla(const Eigen::Ref<const RowVectors> &ecefs);
-RowVectors lla2ecef(const Eigen::Ref<const RowVectors> &llas);
+inline RowVectors ecef2lla(const Eigen::Ref<const RowVectors> &ecefs)
+{
+    const int N = ecefs.rows();
+    RowVectors ret = ecefs;
+    for (int i = 0; i < N; ++i) {
+        internal::ecef_to_geodetic(ret(i, 0), ret(i, 1), ret(i, 2), //
+                                   ret(i, 0), ret(i, 1), ret(i, 2));
+    }
+    ret.col(0) *= 180.0 / M_PI;
+    ret.col(1) *= 180.0 / M_PI;
+    return ret;
+}
+inline RowVectors lla2ecef(const Eigen::Ref<const RowVectors> &llas)
+{
+    const int N = llas.rows();
+    RowVectors ret = llas;
+    ret.col(0) *= M_PI / 180.0;
+    ret.col(1) *= M_PI / 180.0;
+    for (int i = 0; i < N; ++i) {
+        internal::geodetic_to_ecef(ret(i, 0), ret(i, 1), ret(i, 2), //
+                                   ret(i, 0), ret(i, 1), ret(i, 2));
+    }
+    return ret;
+}
+
+inline Eigen::Matrix3d R_ecef_enu(double lon, double lat)
+{
+    lon *= M_PI / 180.0;
+    lat *= M_PI / 180.0;
+    double s1 = std::sin(M_PI / 4.0 + lon / 2.0);
+    double c1 = std::cos(M_PI / 4.0 + lon / 2.0);
+    double s2 = std::sin(M_PI / 4.0 - lat / 2.0);
+    double c2 = std::cos(M_PI / 4.0 - lat / 2.0);
+    return Eigen::Quaterniond{c1 * c2, -c1 * s2, -s1 * s2, -s1 * c2}
+        .toRotationMatrix()
+        .transpose();
+}
+
+inline Eigen::Matrix4d T_ecef_enu(double lon, double lat, double alt)
+{
+    Eigen::Matrix4d T;
+    T.setIdentity();
+    T.topLeftCorner(3, 3) = R_ecef_enu(lon, lat);
+    T.topRightCorner(3, 1) = lla2ecef(lon, lat, alt);
+    return T;
+}
+
+inline RowVectors apply_transform(const Eigen::Matrix4d &T,
+                                  const Eigen::Ref<const RowVectors> &points)
+{
+    return ((T.topLeftCorner<3, 3>() * points.transpose()).colwise() +
+            T.topRightCorner<3, 1>())
+        .transpose();
+}
+
+inline void apply_transform_inplace(const Eigen::Matrix4d &T,
+                                    Eigen::Ref<RowVectors> points,
+                                    int batch_size = 1000)
+{
+    int R = points.rows(), r = 0;
+    while (r < R) {
+        batch_size = std::min(batch_size, R - r);
+        points.middleRows(r, batch_size) =
+            apply_transform(T, points.middleRows(r, batch_size));
+        r += batch_size;
+    }
+}
 } // namespace cubao
