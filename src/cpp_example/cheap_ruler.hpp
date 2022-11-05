@@ -378,7 +378,6 @@ class CheapRuler
     // Returns a part of the given line between the start and the stop points
     // indicated by distance along the line.
     //
-    /*
     line_string lineSliceAlong(double start, double stop,
                                const line_string &line) const
     {
@@ -399,7 +398,7 @@ class CheapRuler
             if (sum >= stop) {
                 slice.push_back(interpolate(p0, p1, (stop - (sum - d)) / d));
                 return line_string::Map(slice[0].data(),
-    (Eigen::Index)slice.size());
+                                        (Eigen::Index)slice.size(), 3);
             }
 
             if (sum > start) {
@@ -407,9 +406,8 @@ class CheapRuler
             }
         }
 
-        return line_string::Map(slice[0].data(), (Eigen::Index)slice.size());
+        return line_string::Map(slice[0].data(), (Eigen::Index)slice.size(), 3);
     }
-    */
 
     //
     // Given a point, returns a bounding box object ([w, s, e, n])
