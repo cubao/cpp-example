@@ -80,7 +80,8 @@ inline void ecef_to_geodetic(const double x, const double y, const double z,
 }
 
 inline void geodetic_to_ecef(const double lon_rad, const double lat_rad,
-                             const double ht, double &x, double &y, double &z)
+                             const double ht, //
+                             double &x, double &y, double &z)
 {
     constexpr double a = 6378137.0;
     constexpr double b = 6356752.314245;
@@ -112,8 +113,8 @@ inline Eigen::Vector3d ecef2lla(double x, double y, double z)
 inline Eigen::Vector3d lla2ecef(double lon, double lat, double alt)
 {
     Eigen::Vector3d xyz;
-    internal::geodetic_to_ecef(to_radians(lon), to_radians(lat), alt, xyz[0],
-                               xyz[1], xyz[2]);
+    internal::geodetic_to_ecef(to_radians(lon), to_radians(lat), alt, //
+                               xyz[0], xyz[1], xyz[2]);
     return xyz;
 }
 
@@ -156,6 +157,7 @@ inline Eigen::Matrix3d R_ecef_enu(double lon, double lat)
         .transpose();
 }
 
+// T_ecef_enu: Transform ecef <-- enu
 inline Eigen::Matrix4d T_ecef_enu(double lon, double lat, double alt)
 {
     Eigen::Matrix4d T;
@@ -199,10 +201,8 @@ inline RowVectors lla2enu(const Eigen::Ref<const RowVectors> &llas,
         anchor_lla = llas.row(0);
     }
     if (!cheap_ruler) {
-        return apply_transform(
-            T_ecef_enu((*anchor_lla)[0], (*anchor_lla)[1], (*anchor_lla)[2])
-                .inverse(),
-            lla2ecef(llas));
+        return apply_transform(T_ecef_enu(*anchor_lla).inverse(),
+                               lla2ecef(llas));
     }
     auto k = CheapRuler::k((*anchor_lla)[1], CheapRuler::Unit::Meters);
     RowVectors enus = llas;
@@ -226,6 +226,30 @@ inline RowVectors enu2lla(const Eigen::Ref<const RowVectors> &enus,
         llas.col(i).array() += anchor_lla[i];
     }
     return llas;
+}
+
+inline RowVectors enu2ecef(const Eigen::Ref<const RowVectors> &enus,
+                           const Eigen::Vector3d &anchor_lla,
+                           bool cheap_ruler = false)
+{
+    if (cheap_ruler) {
+        return lla2ecef(enu2lla(enus, anchor_lla, cheap_ruler));
+    }
+    // lossless and and even faster than cheap-ruler
+    return apply_transform(T_ecef_enu(anchor_lla).inverse(), enus);
+}
+inline RowVectors ecef2enu(const Eigen::Ref<const RowVectors> &ecef,
+                           tl::optional<Eigen::Vector3d> anchor_lla = {},
+                           bool cheap_ruler = false)
+{
+    if (!anchor_lla) {
+        anchor_lla = ecef2lla(ecef(0, 0), ecef(0, 1), ecef(0, 2));
+    }
+    if (cheap_ruler) {
+        return lla2enu(ecef2lla(ecef), anchor_lla, cheap_ruler);
+    }
+    // lossless and and even faster than cheap-ruler
+    return apply_transform(T_ecef_enu(*anchor_lla).inverse(), ecef);
 }
 
 } // namespace cubao
