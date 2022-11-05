@@ -1,6 +1,12 @@
 // based on https://github.com/mapbox/cheap-ruler-cpp
 #pragma once
 
+// // https://github.com/microsoft/vscode-cpptools/issues/9692
+#if __INTELLISENSE__
+#undef __ARM_NEON
+#undef __ARM_NEON__
+#endif
+
 #include <Eigen/Core>
 
 #include <cassert>
@@ -53,6 +59,11 @@ class CheapRuler
     // delta(lat) * ky -> delta north/south in your metric/unit (e.g. meters)
     // delta(alt) * kz -> delta up/down in your metric/unit (e.g. meters)
     Eigen::Vector3d k() const { return Eigen::Vector3d(kx, ky, kz); }
+
+    static Eigen::Vector3d k(double latitude, Unit unit = Meters)
+    {
+        return CheapRuler(latitude, unit).k();
+    }
 
     //
     // A collection of very fast approximations to common geodesic measurements.
