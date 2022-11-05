@@ -280,44 +280,46 @@ struct PolylineRuler
                                 const Eigen::Ref<const RowVectors> &line,
                                 bool is_wgs84 = false)
     {
-
-        return RowVectors(0, 3);
-        /*
         if (is_wgs84) {
-            Eigen::Vector3d anchor = line.row(0);
-            RowVectors start_stop(2, 3);
-            start_stop.row(0) = start;
-            start_stop.row(1) = stop;
-            auto enus = lla2enu(start_stop, anchor);
-            return enu2lla(
-                lineSlice(enus.row(0), enus.row(1),
-                          lla2enu(line, anchor), !is_wgs84),
-                anchor);
+            // TODO
         }
 
-        auto getPoint = [](auto tuple) { return std::get<0>(tuple); };
-        auto getIndex = [](auto tuple) { return std::get<1>(tuple); };
-        auto getT = [](auto tuple) { return std::get<2>(tuple); };
+        auto getPoint = [](auto &tuple) -> const Eigen::Vector3d & {
+            return std::get<0>(tuple);
+        };
+        auto getIndex = [](auto &tuple) -> int { return std::get<1>(tuple); };
+        auto getT = [](auto &tuple) -> double { return std::get<2>(tuple); };
+        auto same_point = [](const Eigen::Vector3d &p1,
+                             const Eigen::Vector3d &p2) { return p1 == p2; };
+
         auto p1 = pointOnLine(line, start);
         auto p2 = pointOnLine(line, stop);
+
         if (getIndex(p1) > getIndex(p2) ||
             (getIndex(p1) == getIndex(p2) && getT(p1) > getT(p2))) {
-            std::swap(p1, p2);
+            auto tmp = p1;
+            p1 = p2;
+            p2 = tmp;
         }
-        std::vector<Eigen::Vector3d> slice = {getPoint(p1)};
+
+        auto slice = std::vector<Eigen::Vector3d>{getPoint(p1)};
+
         auto l = getIndex(p1) + 1;
         auto r = getIndex(p2);
-        if (line.row(l).transpose() != slice[0] && l <= r) {
+
+        if (!same_point(line.row(l), slice[0]) && l <= r) {
             slice.push_back(line.row(l));
         }
+
         for (int i = l + 1; i <= r; ++i) {
             slice.push_back(line.row(i));
         }
-        if (line.row(r).transpose() != getPoint(p2)) {
+
+        if (!same_point(line.row(r), getPoint(p2))) {
             slice.push_back(getPoint(p2));
         }
-        return as_row_vectors(&slice[0][0], slice.size());
-        */
+
+        return RowVectors::Map(slice[0].data(), (Eigen::Index)slice.size(), 3);
     }
     RowVectors lineSlice(const Eigen::Vector3d &start,
                          const Eigen::Vector3d &stop) const
@@ -329,44 +331,35 @@ struct PolylineRuler
                                      const Eigen::Ref<const RowVectors> &line,
                                      bool is_wgs84 = false)
     {
-
-        return RowVectors(0, 3);
-        /*
-        const int N = line.rows();
-        if (N < 2) {
-            return RowVectors(0, 3);
-        }
         if (is_wgs84) {
-            return enu2lla(
-                lineSliceAlong(start, stop, lla2enu(line), !is_wgs84),
-                line.row(0));
+            // TODO
         }
         double sum = 0.;
         std::vector<Eigen::Vector3d> slice;
-        for (int i = 1; i < N; ++i) {
-            Eigen::Vector3d p0 = line.row(i - 1);
-            Eigen::Vector3d p1 = line.row(i);
-            double d = (p0 - p1).norm();
+
+        for (int i = 1; i < line.rows(); ++i) {
+            auto p0 = line.row(i - 1);
+            auto p1 = line.row(i);
+            auto d = distance(p0, p1);
+
             sum += d;
+
             if (sum > start && slice.size() == 0) {
-                if (start < 0) {
-                    slice.push_back(p0);
-                } else {
-                    slice.push_back(
-                        interpolate(p0, p1, (start - (sum - d)) / d, is_wgs84));
-                }
+                slice.push_back(interpolate(p0, p1, (start - (sum - d)) / d));
             }
+
             if (sum >= stop) {
-                slice.push_back(
-                    interpolate(p0, p1, (stop - (sum - d)) / d, is_wgs84));
-                break;
+                slice.push_back(interpolate(p0, p1, (stop - (sum - d)) / d));
+                return RowVectors::Map(slice[0].data(),
+                                       (Eigen::Index)slice.size(), 3);
             }
+
             if (sum > start) {
                 slice.push_back(p1);
             }
         }
-        return as_row_vectors(&slice[0][0], slice.size());
-        */
+
+        return RowVectors::Map(slice[0].data(), (Eigen::Index)slice.size(), 3);
     }
     RowVectors lineSliceAlong(double start, double stop) const
     {
