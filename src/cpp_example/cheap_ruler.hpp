@@ -289,7 +289,7 @@ class CheapRuler
         double minX = 0., minY = 0., minZ = 0, minI = 0., minT = 0.;
 
         if (!line.rows()) {
-            return std::make_tuple(point(), -1, 0.);
+            return std::make_tuple(p, -1, 0.);
         }
 
         for (unsigned i = 0; i < line.rows() - 1; ++i) {

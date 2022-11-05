@@ -122,6 +122,9 @@ using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
 inline RowVectors ecef2lla(const Eigen::Ref<const RowVectors> &ecefs)
 {
     const int N = ecefs.rows();
+    if (!N) {
+        return RowVectors(0, 3);
+    }
     RowVectors ret = ecefs;
     for (int i = 0; i < N; ++i) {
         internal::ecef_to_geodetic(ret(i, 0), ret(i, 1), ret(i, 2), //
@@ -134,6 +137,9 @@ inline RowVectors ecef2lla(const Eigen::Ref<const RowVectors> &ecefs)
 inline RowVectors lla2ecef(const Eigen::Ref<const RowVectors> &llas)
 {
     const int N = llas.rows();
+    if (!N) {
+        return RowVectors(0, 3);
+    }
     RowVectors ret = llas;
     ret.col(0) *= M_PI / 180.0;
     ret.col(1) *= M_PI / 180.0;
@@ -197,6 +203,9 @@ inline RowVectors lla2enu(const Eigen::Ref<const RowVectors> &llas,
                           tl::optional<Eigen::Vector3d> anchor_lla = {},
                           bool cheap_ruler = true)
 {
+    if (!llas.rows()) {
+        return RowVectors(0, 3);
+    }
     if (!anchor_lla) {
         anchor_lla = llas.row(0);
     }
@@ -216,6 +225,9 @@ inline RowVectors enu2lla(const Eigen::Ref<const RowVectors> &enus,
                           const Eigen::Vector3d &anchor_lla,
                           bool cheap_ruler = true)
 {
+    if (!enus.rows()) {
+        return RowVectors(0, 3);
+    }
     if (!cheap_ruler) {
         return ecef2lla(apply_transform(T_ecef_enu(anchor_lla), enus));
     }
@@ -232,6 +244,9 @@ inline RowVectors enu2ecef(const Eigen::Ref<const RowVectors> &enus,
                            const Eigen::Vector3d &anchor_lla,
                            bool cheap_ruler = false)
 {
+    if (!enus.rows()) {
+        return RowVectors(0, 3);
+    }
     if (cheap_ruler) {
         return lla2ecef(enu2lla(enus, anchor_lla, cheap_ruler));
     }
@@ -242,6 +257,9 @@ inline RowVectors ecef2enu(const Eigen::Ref<const RowVectors> &ecef,
                            tl::optional<Eigen::Vector3d> anchor_lla = {},
                            bool cheap_ruler = false)
 {
+    if (!ecef.rows()) {
+        return RowVectors(0, 3);
+    }
     if (!anchor_lla) {
         anchor_lla = ecef2lla(ecef(0, 0), ecef(0, 1), ecef(0, 2));
     }

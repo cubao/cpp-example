@@ -228,7 +228,7 @@ struct PolylineRuler
     {
         int N = line.rows();
         if (!N) {
-            return std::make_tuple(Eigen::Vector3d(0, 0, 0), 0., 0.);
+            return std::make_tuple(p, -1, 0.);
         }
         if (is_wgs84) {
             Eigen::Vector3d anchor = line.row(0);
