@@ -8,6 +8,8 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include "tl/optional.hpp"
+#include "cheap_ruler.hpp"
 
 namespace cubao
 {
@@ -162,6 +164,10 @@ inline Eigen::Matrix4d T_ecef_enu(double lon, double lat, double alt)
     T.topRightCorner(3, 1) = lla2ecef(lon, lat, alt);
     return T;
 }
+inline Eigen::Matrix4d T_ecef_enu(const Eigen::Vector3d &lla)
+{
+    return T_ecef_enu(lla[0], lla[1], lla[2]);
+}
 
 inline RowVectors apply_transform(const Eigen::Matrix4d &T,
                                   const Eigen::Ref<const RowVectors> &points)
@@ -183,4 +189,43 @@ inline void apply_transform_inplace(const Eigen::Matrix4d &T,
         r += batch_size;
     }
 }
+
+using CheapRuler = mapbox::cheap_ruler::CheapRuler;
+inline RowVectors lla2enu(const Eigen::Ref<const RowVectors> &llas,
+                          tl::optional<Eigen::Vector3d> anchor_lla = {},
+                          bool cheap_ruler = true)
+{
+    if (!anchor_lla) {
+        anchor_lla = llas.row(0);
+    }
+    if (!cheap_ruler) {
+        return apply_transform(
+            T_ecef_enu((*anchor_lla)[0], (*anchor_lla)[1], (*anchor_lla)[2])
+                .inverse(),
+            lla2ecef(llas));
+    }
+    auto k = CheapRuler::k((*anchor_lla)[1], CheapRuler::Unit::Meters);
+    RowVectors enus = llas;
+    for (int i = 0; i < 3; ++i) {
+        enus.col(i).array() -= (*anchor_lla)[i];
+        enus.col(i).array() *= k[i];
+    }
+    return enus;
+}
+inline RowVectors enu2lla(const Eigen::Ref<const RowVectors> &enus,
+                          const Eigen::Vector3d &anchor_lla,
+                          bool cheap_ruler = true)
+{
+    if (!cheap_ruler) {
+        return ecef2lla(apply_transform(T_ecef_enu(anchor_lla), enus));
+    }
+    auto k = CheapRuler::k(anchor_lla[1], CheapRuler::Unit::Meters);
+    RowVectors llas = enus;
+    for (int i = 0; i < 3; ++i) {
+        llas.col(i).array() /= k[i];
+        llas.col(i).array() += anchor_lla[i];
+    }
+    return llas;
+}
+
 } // namespace cubao

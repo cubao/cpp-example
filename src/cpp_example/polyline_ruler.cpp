@@ -43,7 +43,7 @@ PolylineRuler::along(const Eigen::Ref<const RowVectors> &line, double dist,
     if (is_wgs84) {
         auto ret = along(lla2enu_cheap(line), dist, !is_wgs84);
         if (ret) {
-            ret = utils::enu2lla_cheap(ret->transpose(), line.row(0)).row(0);
+            ret = enu2lla_cheap(ret->transpose(), line.row(0)).row(0);
         }
         return ret;
     }
@@ -98,7 +98,7 @@ PolylineRuler::pointOnLine(const Eigen::Ref<const RowVectors> &line,
             pointOnLine(lla2enu_cheap(line, anchor),
                         lla2enu_cheap(p.transpose(), anchor).row(0), !is_wgs84);
         std::get<0>(ret) =
-            utils::enu2lla_cheap(std::get<0>(ret).transpose(), anchor).row(0);
+            enu2lla_cheap(std::get<0>(ret).transpose(), anchor).row(0);
         return ret;
     }
     double minDist = std::numeric_limits<double>::infinity();
@@ -151,7 +151,7 @@ RowVectors PolylineRuler::lineSlice(const Eigen::Vector3d &start,
         start_stop.row(0) = start;
         start_stop.row(1) = stop;
         auto enus = lla2enu_cheap(start_stop, anchor);
-        return utils::enu2lla_cheap(
+        return enu2lla_cheap(
             lineSlice(enus.row(0), enus.row(1),
                       lla2enu_cheap(line, anchor), !is_wgs84),
             anchor);
@@ -178,7 +178,7 @@ RowVectors PolylineRuler::lineSlice(const Eigen::Vector3d &start,
     if (line.row(r).transpose() != getPoint(p2)) {
         slice.push_back(getPoint(p2));
     }
-    return utils::as_row_vectors(&slice[0][0], slice.size());
+    return as_row_vectors(&slice[0][0], slice.size());
     */
 }
 RowVectors PolylineRuler::lineSlice(const Eigen::Vector3d &start,
@@ -199,7 +199,7 @@ PolylineRuler::lineSliceAlong(double start, double stop,
         return RowVectors(0, 3);
     }
     if (is_wgs84) {
-        return utils::enu2lla_cheap(
+        return enu2lla_cheap(
             lineSliceAlong(start, stop, lla2enu_cheap(line), !is_wgs84),
             line.row(0));
     }
@@ -227,7 +227,7 @@ PolylineRuler::lineSliceAlong(double start, double stop,
             slice.push_back(p1);
         }
     }
-    return utils::as_row_vectors(&slice[0][0], slice.size());
+    return as_row_vectors(&slice[0][0], slice.size());
     */
 }
 RowVectors PolylineRuler::lineSliceAlong(double start, double stop) const
