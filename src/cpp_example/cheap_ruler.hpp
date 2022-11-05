@@ -122,7 +122,11 @@ class CheapRuler
         return CheapRuler(latitude);
     }
 
-    point delta(point lla0, point lla1) const
+    // Note that:
+    //      should always pass by const reference for eigen types!!!
+    //      https://eigen.tuxfamily.org/dox/group__TopicPassingByValue.html
+
+    point delta(const point &lla0, const point &lla1) const
     {
         auto dx = longDiff(lla1[0], lla0[0]) * kx;
         auto dy = (lla1[1] - lla0[1]) * ky;
@@ -130,7 +134,7 @@ class CheapRuler
         return point(dx, dy, dz);
     }
 
-    double squareDistance(point a, point b) const
+    double squareDistance(const point &a, const point &b) const
     {
         auto dx = longDiff(a[0], b[0]) * kx;
         auto dy = (a[1] - b[1]) * ky;
@@ -142,7 +146,7 @@ class CheapRuler
     // Given two points of the form [x = longitude, y = latitude], returns the
     // distance.
     //
-    double distance(point a, point b) const
+    double distance(const point &a, const point &b) const
     {
         return std::sqrt(squareDistance(a, b));
     }
@@ -154,7 +158,7 @@ class CheapRuler
     // -90              90
     // -135         135
     //       180
-    double bearing(point a, point b) const
+    double bearing(const point &a, const point &b) const
     {
         auto dx = longDiff(b[0], a[0]) * kx;
         auto dy = (b[1] - a[1]) * ky;
@@ -165,9 +169,9 @@ class CheapRuler
     //
     // Returns a new point given distance and bearing from the starting point.
     //
-    point destination(point origin, double dist, double bearing_) const
+    point destination(const point &origin, double dist, double bearing) const
     {
-        auto a = bearing_ * RAD;
+        auto a = bearing * RAD;
 
         return offset(origin, std::sin(a) * dist, std::cos(a) * dist);
     }
@@ -176,7 +180,7 @@ class CheapRuler
     // Returns a new point given easting and northing offsets from the starting
     // point.
     //
-    point offset(point origin, double dx, double dy, double dz = 0) const
+    point offset(const point &origin, double dx, double dy, double dz = 0) const
     {
         return origin + point(dx / kx, dy / ky, dz / kz);
     }
@@ -184,7 +188,7 @@ class CheapRuler
     //
     // Given a line (an array of points), returns the total line distance.
     //
-    double lineDistance(const line_string &points)
+    double lineDistance(const Eigen::Ref<const line_string> &points)
     {
         double total = 0.;
 
@@ -199,7 +203,7 @@ class CheapRuler
     // Given a polygon (an array of rings, where each ring is an array of
     // points), returns the area.
     //
-    double area(polygon ring) const
+    double area(const Eigen::Ref<const polygon> &ring) const
     {
         double sum = 0.;
 
@@ -213,7 +217,7 @@ class CheapRuler
     //
     // Returns the point at a specified distance along the line.
     //
-    point along(const line_string &line, double dist) const
+    point along(const Eigen::Ref<const line_string> &line, double dist) const
     {
         double sum = 0.;
 
@@ -278,8 +282,8 @@ class CheapRuler
     // segment with the closest point, and t is a parameter from 0 to 1 that
     // indicates where the closest point is on that segment.
     //
-    std::tuple<point, int, double> pointOnLine(const line_string &line,
-                                               point p) const
+    std::tuple<point, int, double>
+    pointOnLine(const Eigen::Ref<const line_string> &line, const point &p) const
     {
         double minDist = std::numeric_limits<double>::infinity();
         double minX = 0., minY = 0., minZ = 0, minI = 0., minT = 0.;
@@ -333,8 +337,8 @@ class CheapRuler
     // Returns a part of the given line between the start and the stop points
     // (or their closest points on the line).
     //
-    line_string lineSlice(point start, point stop,
-                          const line_string &line) const
+    line_string lineSlice(const point &start, const point &stop,
+                          const Eigen::Ref<const line_string> &line) const
     {
         auto getPoint = [](auto &tuple) -> const Eigen::Vector3d & {
             return std::get<0>(tuple);
@@ -379,7 +383,7 @@ class CheapRuler
     // indicated by distance along the line.
     //
     line_string lineSliceAlong(double start, double stop,
-                               const line_string &line) const
+                               const Eigen::Ref<line_string> &line) const
     {
         double sum = 0.;
         std::vector<Eigen::Vector3d> slice;
@@ -413,7 +417,7 @@ class CheapRuler
     // Given a point, returns a bounding box object ([w, s, e, n])
     // created from the given point buffered by a given distance.
     //
-    box bufferPoint(point p, double buffer) const
+    box bufferPoint(const point &p, double buffer) const
     {
         auto v = buffer / ky;
         auto h = buffer / kx;
@@ -426,7 +430,7 @@ class CheapRuler
     //
     // Given a bounding box, returns the box buffered by a given distance.
     //
-    box bufferBBox(box bbox, double buffer) const
+    box bufferBBox(const box &bbox, double buffer) const
     {
         auto v = buffer / ky;
         auto h = buffer / kx;
@@ -441,7 +445,8 @@ class CheapRuler
     // Returns true if the given point is inside in the given bounding box,
     // otherwise false.
     //
-    static bool insideBBox(point p, box bbox, bool check_z = false)
+    static bool insideBBox(const point &p, const box &bbox,
+                           bool check_z = false)
     {
         bool inside2d = p[1] >= bbox.first[1] && p[1] <= bbox.second[1] &&
                         longDiff(p[0], bbox.first[0]) >= 0 &&
@@ -452,7 +457,7 @@ class CheapRuler
         return inside2d && bbox.first[2] <= p[2] && p[2] <= bbox.second[2];
     }
 
-    static point interpolate(point a, point b, double t)
+    static point interpolate(const point &a, const point &b, double t)
     {
         double dx = longDiff(b[0], a[0]);
         double dy = b[1] - a[1];
