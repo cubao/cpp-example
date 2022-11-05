@@ -7,7 +7,7 @@ double PolylineRuler::squareDistance(const Eigen::Vector3d &a,
                                      const Eigen::Vector3d &b, bool is_wgs84)
 {
     if (is_wgs84) {
-        return lla2enu_cheap(a.transpose(), b).row(0).squaredNorm();
+        return lla2enu(a.transpose(), b).row(0).squaredNorm();
     }
     return (a - b).squaredNorm();
 }
@@ -16,7 +16,7 @@ double PolylineRuler::lineDistance(const Eigen::Ref<const RowVectors> &line,
                                    bool is_wgs84)
 {
     if (is_wgs84) {
-        return lineDistance(lla2enu_cheap(line), !is_wgs84);
+        return lineDistance(lla2enu(line), !is_wgs84);
     }
     int N = line.rows();
     if (N < 2) {
@@ -41,9 +41,9 @@ PolylineRuler::along(const Eigen::Ref<const RowVectors> &line, double dist,
         return line.row(0);
     }
     if (is_wgs84) {
-        auto ret = along(lla2enu_cheap(line), dist, !is_wgs84);
+        auto ret = along(lla2enu(line), dist, !is_wgs84);
         if (ret) {
-            ret = enu2lla_cheap(ret->transpose(), line.row(0)).row(0);
+            ret = enu2lla(ret->transpose(), line.row(0)).row(0);
         }
         return ret;
     }
@@ -75,7 +75,7 @@ double PolylineRuler::pointToSegmentDistance(const Eigen::Vector3d &p,
         llas.row(0) = p;
         llas.row(1) = a;
         llas.row(2) = b;
-        auto enus = lla2enu_cheap(llas);
+        auto enus = lla2enu(llas);
         return pointToSegmentDistance(enus.row(0), //
                                       enus.row(1), //
                                       enus.row(2), //
@@ -95,10 +95,9 @@ PolylineRuler::pointOnLine(const Eigen::Ref<const RowVectors> &line,
     if (is_wgs84) {
         Eigen::Vector3d anchor = line.row(0);
         auto ret =
-            pointOnLine(lla2enu_cheap(line, anchor),
-                        lla2enu_cheap(p.transpose(), anchor).row(0), !is_wgs84);
-        std::get<0>(ret) =
-            enu2lla_cheap(std::get<0>(ret).transpose(), anchor).row(0);
+            pointOnLine(lla2enu(line, anchor),
+                        lla2enu(p.transpose(), anchor).row(0), !is_wgs84);
+        std::get<0>(ret) = enu2lla(std::get<0>(ret).transpose(), anchor).row(0);
         return ret;
     }
     double minDist = std::numeric_limits<double>::infinity();
@@ -150,10 +149,10 @@ RowVectors PolylineRuler::lineSlice(const Eigen::Vector3d &start,
         RowVectors start_stop(2, 3);
         start_stop.row(0) = start;
         start_stop.row(1) = stop;
-        auto enus = lla2enu_cheap(start_stop, anchor);
-        return enu2lla_cheap(
+        auto enus = lla2enu(start_stop, anchor);
+        return enu2lla(
             lineSlice(enus.row(0), enus.row(1),
-                      lla2enu_cheap(line, anchor), !is_wgs84),
+                      lla2enu(line, anchor), !is_wgs84),
             anchor);
     }
 
@@ -199,8 +198,8 @@ PolylineRuler::lineSliceAlong(double start, double stop,
         return RowVectors(0, 3);
     }
     if (is_wgs84) {
-        return enu2lla_cheap(
-            lineSliceAlong(start, stop, lla2enu_cheap(line), !is_wgs84),
+        return enu2lla(
+            lineSliceAlong(start, stop, lla2enu(line), !is_wgs84),
             line.row(0));
     }
     double sum = 0.;
@@ -243,10 +242,10 @@ Eigen::Vector3d PolylineRuler::interpolate(const Eigen::Vector3d &a,
         RowVectors llas(2, 3);
         llas.row(0) = a;
         llas.row(1) = b;
-        auto enus = lla2enu_cheap(llas);
-        return enu2lla_cheap(interpolate(enus.row(0), enus.row(1), t, !is_wgs84)
-                                 .transpose(),
-                             llas.row(0))
+        auto enus = lla2enu(llas);
+        return enu2lla(interpolate(enus.row(0), enus.row(1), t, !is_wgs84)
+                           .transpose(),
+                       llas.row(0))
             .row(0);
     }
     return a + (b - a) * t;
