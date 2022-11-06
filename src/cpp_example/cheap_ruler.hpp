@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-namespace mapbox
+namespace cubao
 {
 using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
 
@@ -477,4 +477,4 @@ class CheapRuler
 };
 
 } // namespace cheap_ruler
-} // namespace mapbox
+} // namespace cubao

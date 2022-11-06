@@ -198,7 +198,7 @@ inline void apply_transform_inplace(const Eigen::Matrix4d &T,
     }
 }
 
-using CheapRuler = mapbox::cheap_ruler::CheapRuler;
+using CheapRuler = cheap_ruler::CheapRuler;
 inline RowVectors lla2enu(const Eigen::Ref<const RowVectors> &llas,
                           tl::optional<Eigen::Vector3d> anchor_lla = {},
                           bool cheap_ruler = true)

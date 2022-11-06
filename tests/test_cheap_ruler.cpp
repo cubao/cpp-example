@@ -8,7 +8,7 @@
 
 TEST_CASE("cheap ruler")
 {
-    auto ruler = mapbox::cheap_ruler::CheapRuler(
-        45.0, mapbox::cheap_ruler::CheapRuler::Unit::Meters);
+    auto ruler = cubao::cheap_ruler::CheapRuler(
+        45.0, cubao::cheap_ruler::CheapRuler::Unit::Meters);
     dbg(ruler.k().norm());
 }
