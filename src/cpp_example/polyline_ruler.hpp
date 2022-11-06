@@ -11,6 +11,7 @@
 
 #include "cheap_ruler.hpp"
 #include "crs_transform.hpp"
+#include "eigen_helpers.hpp"
 
 namespace cubao
 {
@@ -274,6 +275,34 @@ struct PolylineRuler
         double t = (range - ranges[i]) / (ranges[i + 1] - ranges[i]);
         return interpolate(polyline_.row(i), polyline_.row(i + 1), t,
                            is_wgs84_);
+    }
+
+    std::pair<Eigen::Vector3d, Eigen::Vector3d>
+    arrow(double range, bool smooth_joint = true) const
+    {
+        return std::make_pair(extended_along(range), dir(range, smooth_joint));
+    }
+
+    std::tuple<Eigen::VectorXd, RowVectors, RowVectors>
+    arrows(const Eigen::Ref<const Eigen::VectorXd> &ranges,
+           bool smooth_joint = true) const
+    {
+        const int N = ranges.size();
+        RowVectors xyzs(N, 3);
+        RowVectors dirs(N, 3);
+        for (int i = 0; i < N; ++i) {
+            auto arrow = this->arrow(ranges[i], smooth_joint);
+            xyzs.row(i) = arrow.first;
+            dirs.row(i) = arrow.second;
+        }
+        return std::make_tuple(std::move(ranges), std::move(xyzs),
+                               std::move(dirs));
+    }
+
+    std::tuple<Eigen::VectorXd, RowVectors, RowVectors>
+    arrows(double step, bool with_last = true, bool smooth_joint = true) const
+    {
+        return arrows(arange(0.0, length(), step, with_last), smooth_joint);
     }
 
     std::pair<Eigen::Vector3d, Eigen::Vector3d>
@@ -563,42 +592,6 @@ struct PolylineRuler
         return a + (b - a) * t;
     }
 };
-
-inline Eigen::VectorXi
-indexes2mask(const Eigen::Ref<const Eigen::VectorXi> &indexes, int N)
-{
-    Eigen::VectorXi mask(N);
-    mask.setZero();
-    for (int c = 0, C = indexes.size(); c < C; ++c) {
-        mask[indexes[c]] = 1;
-    }
-    return mask;
-}
-
-inline Eigen::VectorXi
-mask2indexes(const Eigen::Ref<const Eigen::VectorXi> &mask)
-{
-    Eigen::VectorXi indexes(mask.sum());
-    for (int i = 0, j = 0, N = mask.size(); i < N; ++i) {
-        if (mask[i]) {
-            indexes[j++] = i;
-        }
-    }
-    return indexes;
-}
-
-RowVectors select_by_mask(const Eigen::Ref<const RowVectors> &coords,
-                          const Eigen::Ref<const Eigen::VectorXi> &mask)
-{
-    RowVectors ret(mask.sum(), coords.cols());
-    int N = mask.size();
-    for (int i = 0, k = 0; i < N; ++i) {
-        if (mask[i]) {
-            ret.row(k++) = coords.row(i);
-        }
-    }
-    return ret;
-}
 
 inline void douglas_simplify(const Eigen::Ref<const RowVectors> &coords,
                              Eigen::VectorXi &to_keep, const int i, const int j,
