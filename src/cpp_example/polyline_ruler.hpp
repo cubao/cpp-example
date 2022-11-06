@@ -1,6 +1,6 @@
 #pragma once
 
-// // https://github.com/microsoft/vscode-cpptools/issues/9692
+// https://github.com/microsoft/vscode-cpptools/issues/9692
 #if __INTELLISENSE__
 #undef __ARM_NEON
 #undef __ARM_NEON__
@@ -199,7 +199,7 @@ struct PolylineRuler
         Eigen::VectorXd norms2 = (polyline.leftCols(2).bottomRows(N - 1) -
                                   polyline.leftCols(2).topRows(N - 1))
                                      .rowwise()
-                                     .squaredNorm();
+                                     .norm();
         for (int i = 0; i < N - 1; ++i) {
             if (norms2[i]) {
                 ret.row(i) /= ret.row(i).norm();
@@ -207,11 +207,13 @@ struct PolylineRuler
             }
             // try find left, right effective-offset nodes
             int l = i, r = i + 1;
-            while (r < N - 1 && !norms2[r])
+            while (r < N - 1 && !norms2[r]) {
                 ++r;
-            if (r == i + 1 || r == N) {
-                while (l >= 0 && !norms2[l])
+            }
+            if (r != i + 1 || r == N) {
+                while (l >= 0 && !norms2[l]) {
                     --l;
+                }
             }
             l = std::max(0, l);
             r = std::min(N - 1, r);
@@ -219,7 +221,8 @@ struct PolylineRuler
                 throw std::invalid_argument(
                     "polyline is collapsed under plane-xy");
             }
-            Eigen::Vector3d delta = polyline.row(r) - polyline.row(l);
+            Eigen::Vector3d delta =
+                polyline.row(std::min(r + 1, N - 1)) - polyline.row(l);
             ret.row(i) = delta / delta.norm();
         }
         return ret;

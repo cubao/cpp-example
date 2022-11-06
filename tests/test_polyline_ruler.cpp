@@ -105,6 +105,14 @@ TEST_CASE("polyline ruler, scanline")
         CHECK_VEC3_NEAR(Eigen::Vector3d(15, 1e-3, 0), scaneline.first, 1e-3);
         CHECK_VEC3_NEAR(Eigen::Vector3d(5, 1e-3, 0), scaneline.second, 1e-3);
     }
+    {
+        double radius = 10.0 * std::sqrt(2.0);
+        auto scaneline = dbg(ruler.scanline(10, -radius, radius));
+        CHECK(dbg(std::fabs((scaneline.second - scaneline.first).norm() -
+                            2 * radius)) < 1e-3);
+        CHECK_VEC3_NEAR(Eigen::Vector3d(20, -10, 0), scaneline.first, 1e-3);
+        CHECK_VEC3_NEAR(Eigen::Vector3d(0, 10, 0), scaneline.second, 1e-3);
+    }
 }
 
 TEST_CASE("polyline ruler, plane-xy duplicates")
@@ -129,7 +137,7 @@ TEST_CASE("polyline ruler, plane-xy duplicates")
     CHECK(dirs.rows() == 4);
     CHECK_VEC3(Eigen::Vector3d(1, 0, 0), dirs.row(0));
     CHECK_VEC3_NEAR(
-        Eigen::Vector3d(std::sqrt(2.0) / 2.0, 0, std::sqrt(2.0) / 2.0),
+        Eigen::Vector3d(0, std::sqrt(2.0) / 2.0, std::sqrt(2.0) / 2.0),
         dirs.row(1), 1e-3);
     CHECK_VEC3(Eigen::Vector3d(0, 1, 0), dirs.row(2));
     CHECK_VEC3(Eigen::Vector3d(1, 0, 0), dirs.row(3));
@@ -144,4 +152,29 @@ TEST_CASE("polyline ruler, plane-xy duplicates")
     CHECK_VEC3(dbg(ruler.extended_along(35.0)), Eigen::Vector3d(15, 10, 10));
     CHECK_VEC3(dbg(ruler.extended_along(40.0)), Eigen::Vector3d(20, 10, 10));
     CHECK_VEC3(dbg(ruler.extended_along(45.0)), Eigen::Vector3d(25, 10, 10));
+}
+
+TEST_CASE("polyline ruler, xyz duplicates")
+{
+    auto ruler = cubao::PolylineRuler({
+        {0, 0, 0},
+        {10, 0, 0},
+        {10, 0, 0},
+        {10, 10, 0},
+        {20, 10, 0},
+    });
+    auto ranges = ruler.ranges();
+    dbg(ranges);
+    CHECK((ranges.array() -
+           (Eigen::VectorXd(5) << 0, 10, 10, 20, 30).finished().array())
+              .cwiseAbs2()
+              .sum() < 1e-3);
+
+    auto dirs = ruler.dirs();
+    std::cout << dirs << std::endl;
+    CHECK(dirs.rows() == 4);
+    CHECK_VEC3(Eigen::Vector3d(1, 0, 0), dirs.row(0));
+    CHECK_VEC3(Eigen::Vector3d(0, 1, 0), dirs.row(1));
+    CHECK_VEC3(Eigen::Vector3d(0, 1, 0), dirs.row(2));
+    CHECK_VEC3(Eigen::Vector3d(1, 0, 0), dirs.row(3));
 }

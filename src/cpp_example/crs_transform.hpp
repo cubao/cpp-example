@@ -1,6 +1,6 @@
 #pragma once
 
-// // https://github.com/microsoft/vscode-cpptools/issues/9692
+// https://github.com/microsoft/vscode-cpptools/issues/9692
 #if __INTELLISENSE__
 #undef __ARM_NEON
 #undef __ARM_NEON__
