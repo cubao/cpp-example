@@ -135,6 +135,10 @@ struct PolylineRuler
     static Eigen::VectorXd ranges(const Eigen::Ref<const RowVectors> &polyline,
                                   bool is_wgs84 = false)
     {
+        // example
+        //      0  1  2  3  4  5
+        //      o----o--------o
+        //      return [0, 1.5, 4.8]
         if (is_wgs84) {
             return ranges(lla2enu(polyline), !is_wgs84);
         }
@@ -167,11 +171,49 @@ struct PolylineRuler
     static RowVectors dirs(const Eigen::Ref<const RowVectors> &polyline,
                            bool is_wgs84 = false)
     {
+        // example
+        //                             o
+        //        dir0   dir1   dir2  / dir3
+        //      o------o------o------o
+        //      return [
+        //          dir0,
+        //          dir1,
+        //          dir2,
+        //          dir3,
+        //      ]
+        // will skip duplicate nodes (in x-y plane)
         if (is_wgs84) {
             return dirs(lla2enu(polyline), !is_wgs84);
         }
-        // TODO
-        return RowVectors(0, 3);
+        const int N = polyline.rows();
+        RowVectors ret = polyline.bottomRows(N - 1) - polyline.topRows(N - 1);
+        Eigen::VectorXd norms2 = (polyline.leftCols(2).bottomRows(N - 1) -
+                                  polyline.leftCols(2).topRows(N - 1))
+                                     .rowwise()
+                                     .squaredNorm();
+        for (int i = 0; i < N - 1; ++i) {
+            if (norms2[i]) {
+                ret.row(i) /= ret.row(i).norm();
+                continue;
+            }
+            // try find left, right effective-offset nodes
+            int l = i, r = i + 1;
+            while (r < N - 1 && !norms2[r])
+                ++r;
+            if (r == i + 1 || r == N) {
+                while (l >= 0 && !norms2[l])
+                    --l;
+            }
+            l = std::max(0, l);
+            r = std::min(N - 1, r);
+            if (!norms2.segment(l, r - l + 1).sum()) {
+                throw std::invalid_argument(
+                    "polyline is collapsed under plane-xy");
+            }
+            Eigen::Vector3d delta = polyline.row(r) - polyline.row(l);
+            ret.row(i) = delta / delta.norm();
+        }
+        return ret;
     }
 
     const RowVectors &dirs() const
