@@ -11,6 +11,10 @@
 
 namespace cubao
 {
+using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
+using RowVectorsNx3 = RowVectors;
+using RowVectorsNx2 = Eigen::Matrix<double, Eigen::Dynamic, 2, Eigen::RowMajor>;
+
 // https://stackoverflow.com/a/73799908/5089147
 inline Eigen::VectorXd arange(double low, double high, double step,
                               bool with_last = false)
@@ -63,4 +67,13 @@ inline RowVectors select_by_mask(const Eigen::Ref<const RowVectors> &coords,
     }
     return ret;
 }
+
+inline RowVectors to_Nx3(const Eigen::Ref<const RowVectorsNx2> &coords)
+{
+    RowVectors _coords(coords.rows(), 3);
+    _coords.leftCols(2) = coords;
+    _coords.col(2).setZero();
+    return _coords;
+}
+
 } // namespace cubao

@@ -620,8 +620,11 @@ inline void douglas_simplify(const Eigen::Ref<const RowVectors> &coords,
 
 inline Eigen::VectorXi
 douglas_simplify_mask(const Eigen::Ref<const RowVectors> &coords,
-                      double epsilon)
+                      double epsilon, bool is_wgs84 = false)
 {
+    if (is_wgs84) {
+        return douglas_simplify_mask(lla2enu(coords), epsilon, !is_wgs84);
+    }
     Eigen::VectorXi mask(coords.rows());
     mask.setZero();
     douglas_simplify(coords, mask, 0, mask.size() - 1, epsilon);
@@ -630,15 +633,16 @@ douglas_simplify_mask(const Eigen::Ref<const RowVectors> &coords,
 
 inline Eigen::VectorXi
 douglas_simplify_indexes(const Eigen::Ref<const RowVectors> &coords,
-                         double epsilon)
+                         double epsilon, bool is_wgs84 = false)
 {
-    return mask2indexes(douglas_simplify_mask(coords, epsilon));
+    return mask2indexes(douglas_simplify_mask(coords, epsilon, is_wgs84));
 }
 
 inline RowVectors douglas_simplify(const Eigen::Ref<const RowVectors> &coords,
-                                   double epsilon)
+                                   double epsilon, bool is_wgs84 = false)
 {
-    return select_by_mask(coords, douglas_simplify_mask(coords, epsilon));
+    return select_by_mask(coords,
+                          douglas_simplify_mask(coords, epsilon, is_wgs84));
 }
 
 } // namespace cubao
