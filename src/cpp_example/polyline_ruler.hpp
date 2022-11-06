@@ -258,6 +258,11 @@ struct PolylineRuler
             double t = range / ranges[1];
             return interpolate(polyline_.row(0), polyline_.row(1), t,
                                is_wgs84_);
+        } else if (range >= length()) {
+            double t =
+                (range - ranges[N_ - 2]) / (ranges[N_ - 1] - ranges[N_ - 2]);
+            return interpolate(polyline_.row(N_ - 2), polyline_.row(N_ - 1), t,
+                               is_wgs84_);
         }
         int i = 0;
         while (i + 1 < N_ && ranges[i + 1] < range) {
@@ -268,7 +273,7 @@ struct PolylineRuler
                            is_wgs84_);
     }
 
-    std::tuple<Eigen::Vector3d, Eigen::Vector3d>
+    std::pair<Eigen::Vector3d, Eigen::Vector3d>
     scanline(double range, double min = -5.0, double max = 5.0) const
     {
         auto pos = this->extended_along(range);
@@ -278,7 +283,7 @@ struct PolylineRuler
         if (is_wgs84_) {
             left.array() /= k_.array();
         }
-        return std::make_tuple<Eigen::Vector3d, Eigen::Vector3d>(
+        return std::make_pair<Eigen::Vector3d, Eigen::Vector3d>(
             pos + left * min, pos + left * max);
     }
 
