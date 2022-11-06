@@ -277,10 +277,11 @@ struct PolylineRuler
     }
 
     std::pair<Eigen::Vector3d, Eigen::Vector3d>
-    scanline(double range, double min = -5.0, double max = 5.0) const
+    scanline(double range, double min = -5.0, double max = 5.0,
+             bool smooth_joint = true) const
     {
         auto pos = this->extended_along(range);
-        auto dir = this->dir(range);
+        auto dir = this->dir(range, smooth_joint);
         Eigen::Vector3d left(-dir[1], dir[0], 0.0);
         left /= left.norm();
         if (is_wgs84_) {
@@ -288,6 +289,27 @@ struct PolylineRuler
         }
         return std::make_pair<Eigen::Vector3d, Eigen::Vector3d>(
             pos + left * min, pos + left * max);
+    }
+
+    // similar to Frenet frame, x -> forward, y->leftward, z->upword
+    Eigen::Matrix4d local_frame(double range, bool smooth_joint = true) const
+    {
+        auto x = this->dir(range, smooth_joint); // forward
+        Eigen::Vector3d z(0, 0, 1);              // upward
+        Eigen::Vector3d y = z.cross(x);          // leftward
+        y /= y.norm();
+        z = x.cross(y);
+        Eigen::Matrix4d T_world_local = Eigen::Matrix4d::Identity();
+        T_world_local.block<3, 1>(0, 0) = x;
+        T_world_local.block<3, 1>(0, 1) = y;
+        T_world_local.block<3, 1>(0, 2) = z;
+        if (!is_wgs84_) {
+            T_world_local.block<3, 1>(0, 3) = this->extended_along(range);
+        } else {
+            T_world_local =
+                T_ecef_enu(this->extended_along(range)) * T_world_local;
+        }
+        return T_world_local;
     }
 
     // almost identical APIs to CheapRuler

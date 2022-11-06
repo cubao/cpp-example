@@ -178,3 +178,52 @@ TEST_CASE("polyline ruler, xyz duplicates")
     CHECK_VEC3(Eigen::Vector3d(0, 1, 0), dirs.row(2));
     CHECK_VEC3(Eigen::Vector3d(1, 0, 0), dirs.row(3));
 }
+
+TEST_CASE("polyline ruler, local frame")
+{
+    auto ruler = cubao::PolylineRuler({
+        {0, 0, 0},
+        {10, 0, 0},
+        {10, 10, 0},
+    });
+    dbg(ruler.N());
+    dbg("0.0");
+    std::cout << ruler.local_frame(0.0) << std::endl;
+    dbg("5.0");
+    std::cout << ruler.local_frame(5.0) << std::endl;
+    dbg("10.0");
+    std::cout << ruler.local_frame(10.0) << std::endl;
+    dbg("15.0");
+    std::cout << ruler.local_frame(15.0) << std::endl;
+
+    dbg("10.0 no-smooth");
+    std::cout << ruler.local_frame(10.0, false) << std::endl;
+    CHECK((ruler.local_frame(10.0, false) - ruler.local_frame(10.0 - 1e-9))
+              .cwiseAbs2()
+              .sum() < 1e-3);
+}
+
+TEST_CASE("polyline ruler, local frame")
+{
+    auto ruler = cubao::PolylineRuler(
+        {
+            {120, 45, 0},
+            {121, 45, 0},
+        },
+        true);
+    dbg(ruler.ranges());
+
+    dbg("ECEF pose");
+    auto T_ecef_local = ruler.local_frame(10.0);
+    CHECK(!T_ecef_local.topLeftCorner(3, 3).isIdentity(1e-3));
+    std::cout << T_ecef_local << std::endl;
+
+    dbg("ENU pose");
+    Eigen::Matrix4d T_enu_local =
+        cubao::T_ecef_enu(ruler.polyline().row(0)).inverse() * T_ecef_local;
+    std::cout << T_enu_local << std::endl;
+    CHECK(T_enu_local.topLeftCorner(3, 3).isIdentity(1e-3));
+    CHECK(
+        (T_enu_local.topRightCorner(3, 1) - Eigen::Vector3d(10, 0, 0)).norm() <
+        1e-3);
+}
