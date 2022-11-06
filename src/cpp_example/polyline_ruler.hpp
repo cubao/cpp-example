@@ -245,7 +245,8 @@ struct PolylineRuler
             ++i;
         }
         if (smooth_joint && i + 1 < N_ && ranges[i + 1] == range) {
-            // TODO, mean of two dirs
+            Eigen::Vector3d dir = dirs.row(i + 1) + dirs.row(i);
+            return dir / dir.norm();
         }
         return dirs.row(std::min(i, (int)dirs.rows() - 1));
     }
