@@ -168,6 +168,8 @@ struct PolylineRuler
         return *ranges_;
     }
 
+    double length() const { return ranges()[N_ - 1]; }
+
     static RowVectors dirs(const Eigen::Ref<const RowVectors> &polyline,
                            bool is_wgs84 = false)
     {
@@ -224,6 +226,37 @@ struct PolylineRuler
         return *dirs_;
     }
 
+    Eigen::Vector3d dir(double range, bool smooth_joint = true) const
+    {
+        auto &dirs = this->dirs();
+        if (range <= 0.0) {
+            return dirs.row(0);
+        }
+        auto &ranges = this->ranges();
+        int i = 0;
+        while (i + 1 < N_ && ranges[i + 1] < range) {
+            ++i;
+        }
+        if (smooth_joint && i + 1 < N_ && ranges[i + 1] == range) {
+            // TODO, mean of two dirs
+        }
+        return dirs.row(std::min(i, (int)dirs.rows() - 1));
+    }
+
+    std::tuple<Eigen::Vector3d, Eigen::Vector3d>
+    scanline(double range, double min = -5.0, double max = 5.0) const
+    {
+        auto pos = this->along(range);
+        auto dir = this->dir(range);
+        Eigen::Vector3d left(-dir[1], dir[0], 0.0);
+        left /= left.norm();
+        if (is_wgs84_) {
+            left.array() /= k_.array();
+        }
+        return std::make_tuple<Eigen::Vector3d, Eigen::Vector3d>(
+            pos + left * min, pos + left * max);
+    }
+
     // almost identical APIs to CheapRuler
     static double squareDistance(const Eigen::Vector3d &a,
                                  const Eigen::Vector3d &b,
@@ -257,25 +290,18 @@ struct PolylineRuler
     }
     double lineDistance() const { return ranges()[N_]; }
 
-    static tl::optional<Eigen::Vector3d>
-    along(const Eigen::Ref<const RowVectors> &line, double dist,
-          bool is_wgs84 = false)
+    static Eigen::Vector3d along(const Eigen::Ref<const RowVectors> &line,
+                                 double dist, bool is_wgs84 = false)
     {
-        int N = line.rows();
-        if (!N) {
-            return {};
-        }
         if (dist <= 0.) {
             return line.row(0);
         }
         if (is_wgs84) {
             auto ret = along(lla2enu(line), dist, !is_wgs84);
-            if (ret) {
-                ret = enu2lla(ret->transpose(), line.row(0)).row(0);
-            }
-            return ret;
+            return enu2lla(ret.transpose(), line.row(0)).row(0);
         }
 
+        const int N = line.rows();
         double sum = 0.;
         for (int i = 0; i < N - 1; ++i) {
             double d = (line.row(i) - line.row(i + 1)).norm();
@@ -287,7 +313,7 @@ struct PolylineRuler
         }
         return line.row(N - 1);
     }
-    tl::optional<Eigen::Vector3d> along(double dist) const
+    Eigen::Vector3d along(double dist) const
     {
         return along(polyline_, dist, is_wgs84_);
     }
