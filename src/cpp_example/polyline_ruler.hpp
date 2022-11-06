@@ -251,10 +251,27 @@ struct PolylineRuler
         return dirs.row(std::min(i, (int)dirs.rows() - 1));
     }
 
+    Eigen::Vector3d extended_along(double range) const
+    {
+        auto &ranges = this->ranges();
+        if (range <= 0.0) {
+            double t = range / ranges[1];
+            return interpolate(polyline_.row(0), polyline_.row(1), t,
+                               is_wgs84_);
+        }
+        int i = 0;
+        while (i + 1 < N_ && ranges[i + 1] < range) {
+            ++i;
+        }
+        double t = (range - ranges[i]) / (ranges[i + 1] - ranges[i]);
+        return interpolate(polyline_.row(i), polyline_.row(i + 1), t,
+                           is_wgs84_);
+    }
+
     std::tuple<Eigen::Vector3d, Eigen::Vector3d>
     scanline(double range, double min = -5.0, double max = 5.0) const
     {
-        auto pos = this->along(range);
+        auto pos = this->extended_along(range);
         auto dir = this->dir(range);
         Eigen::Vector3d left(-dir[1], dir[0], 0.0);
         left /= left.norm();
