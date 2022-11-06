@@ -131,8 +131,56 @@ struct PolylineRuler
     const RowVectors &polyline() const { return polyline_; }
     int N() const { return N_; }
     bool is_wgs84() const { return is_wgs84_; }
-    const Eigen::VectorXd &ranges() const { return *ranges_; }
-    const RowVectors &dirs() const { return *dirs_; }
+
+    static Eigen::VectorXd ranges(const Eigen::Ref<const RowVectors> &polyline,
+                                  bool is_wgs84 = false)
+    {
+        if (is_wgs84) {
+            return ranges(lla2enu(polyline), !is_wgs84);
+        }
+        const int N = polyline.rows();
+        if (N < 2) {
+            throw std::invalid_argument(
+                "polyline should have at least two points");
+        }
+        Eigen::VectorXd ranges =
+            (polyline.bottomRows(N - 1) - polyline.topRows(N - 1))
+                .rowwise()
+                .norm();
+        for (int i = 1; i < N - 1; ++i) {
+            ranges[i] += ranges[i - 1];
+        }
+        Eigen::VectorXd ret(N);
+        ret[0] = 0.0;
+        ret.tail(N - 1) = ranges;
+        return ret;
+    }
+
+    const Eigen::VectorXd &ranges() const
+    {
+        if (!ranges_) {
+            ranges_ = ranges(polyline_, is_wgs84_);
+        }
+        return *ranges_;
+    }
+
+    static RowVectors dirs(const Eigen::Ref<const RowVectors> &polyline,
+                           bool is_wgs84 = false)
+    {
+        if (is_wgs84) {
+            return dirs(lla2enu(polyline), !is_wgs84);
+        }
+        // TODO
+        return RowVectors(0, 3);
+    }
+
+    const RowVectors &dirs() const
+    {
+        if (!dirs_) {
+            dirs_ = dirs(polyline_, is_wgs84_);
+        }
+        return *dirs_;
+    }
 
     // almost identical APIs to CheapRuler
     static double squareDistance(const Eigen::Vector3d &a,
