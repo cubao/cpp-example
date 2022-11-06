@@ -117,6 +117,13 @@ struct PolylineRuler
                       : Eigen::Vector3d::Ones())
     {
     }
+    PolylineRuler(const std::vector<std::array<double, 3>> &polyline,
+                  bool is_wgs84 = false)
+        : PolylineRuler(
+              Eigen::Map<const RowVectors>(&polyline[0][0], polyline.size(), 3),
+              is_wgs84)
+    {
+    }
 
   private:
     const RowVectors polyline_;
