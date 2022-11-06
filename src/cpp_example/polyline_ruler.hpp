@@ -281,7 +281,14 @@ struct PolylineRuler
                                 bool is_wgs84 = false)
     {
         if (is_wgs84) {
-            // TODO
+            const Eigen::Vector3d &anchor_lla = start;
+            RowVectors start_stop(2, 3);
+            start_stop.row(0) = start;
+            start_stop.row(1) = stop;
+            start_stop = lla2enu(start_stop, anchor_lla);
+            return enu2lla(lineSlice(start_stop.row(0), start_stop.row(1), //
+                                     lla2enu(line, anchor_lla), !is_wgs84),
+                           anchor_lla);
         }
 
         auto getPoint = [](auto &tuple) -> const Eigen::Vector3d & {
@@ -332,7 +339,9 @@ struct PolylineRuler
                                      bool is_wgs84 = false)
     {
         if (is_wgs84) {
-            // TODO
+            return enu2lla(
+                lineSliceAlong(start, stop, lla2enu(line), !is_wgs84),
+                line.row(0));
         }
         double sum = 0.;
         std::vector<Eigen::Vector3d> slice;
