@@ -564,4 +564,88 @@ struct PolylineRuler
     }
 };
 
+inline Eigen::VectorXi
+indexes2mask(const Eigen::Ref<const Eigen::VectorXi> &indexes, int N)
+{
+    Eigen::VectorXi mask(N);
+    mask.setZero();
+    for (int c = 0, C = indexes.size(); c < C; ++c) {
+        mask[indexes[c]] = 1;
+    }
+    return mask;
+}
+
+inline Eigen::VectorXi
+mask2indexes(const Eigen::Ref<const Eigen::VectorXi> &mask)
+{
+    Eigen::VectorXi indexes(mask.sum());
+    for (int i = 0, j = 0, N = mask.size(); i < N; ++i) {
+        if (mask[i]) {
+            indexes[j++] = i;
+        }
+    }
+    return indexes;
+}
+
+RowVectors select_by_mask(const Eigen::Ref<const RowVectors> &coords,
+                          const Eigen::Ref<const Eigen::VectorXi> &mask)
+{
+    RowVectors ret(mask.sum(), coords.cols());
+    int N = mask.size();
+    for (int i = 0, k = 0; i < N; ++i) {
+        if (mask[i]) {
+            ret.row(k++) = coords.row(i);
+        }
+    }
+    return ret;
+}
+
+inline void douglas_simplify(const Eigen::Ref<const RowVectors> &coords,
+                             Eigen::VectorXi &to_keep, const int i, const int j,
+                             const double epsilon)
+{
+    to_keep[i] = to_keep[j] = 1;
+    if (j - i <= 1) {
+        return;
+    }
+    LineSegment line(coords.row(i), coords.row(j));
+    double max_dist2 = 0.0;
+    int max_index = i;
+    for (int k = i + 1; k < j; ++k) {
+        double dist2 = line.distance2(coords.row(k));
+        if (dist2 > max_dist2) {
+            max_dist2 = dist2;
+            max_index = k;
+        }
+    }
+    if (max_dist2 <= epsilon * epsilon) {
+        return;
+    }
+    douglas_simplify(coords, to_keep, i, max_index, epsilon);
+    douglas_simplify(coords, to_keep, max_index, j, epsilon);
+}
+
+inline Eigen::VectorXi
+douglas_simplify_mask(const Eigen::Ref<const RowVectors> &coords,
+                      double epsilon)
+{
+    Eigen::VectorXi mask(coords.rows());
+    mask.setZero();
+    douglas_simplify(coords, mask, 0, mask.size() - 1, epsilon);
+    return mask;
+}
+
+inline Eigen::VectorXi
+douglas_simplify_indexes(const Eigen::Ref<const RowVectors> &coords,
+                         double epsilon)
+{
+    return mask2indexes(douglas_simplify_mask(coords, epsilon));
+}
+
+inline RowVectors douglas_simplify(const Eigen::Ref<const RowVectors> &coords,
+                                   double epsilon)
+{
+    return select_by_mask(coords, douglas_simplify_mask(coords, epsilon));
+}
+
 } // namespace cubao
