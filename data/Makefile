@@ -3,13 +3,13 @@
 # so these download links 100% guarantee exatly same files across time.
 
 all:
-    @echo use "make pull" to pull data
-    @echo use "make clean" to clean data
+	@echo use "make pull" to pull data
+	@echo use "make clean" to clean data
 
 .PHONY: all pull clean
 clean:
-    @find . -maxdepth 1 ! -name Makefile ! -name . ! -name .. -exec rm -rf {} +
+	@find . -maxdepth 1 ! -name Makefile ! -name . ! -name .. -exec rm -rf {} +
 
-pull: json-schema-2022-12.json
-json-schema-2022-12.json:
-    wget https://json-schema.org/draft/2020-12/schema
+pull: schema
+schema:
+	wget https://json-schema.org/draft/2020-12/schema

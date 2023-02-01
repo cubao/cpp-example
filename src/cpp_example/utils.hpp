@@ -2,6 +2,7 @@
 
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
+#include <algorithm>
 
 namespace cubao
 {
@@ -20,7 +21,39 @@ namespace utils
 {
 void hello();
 
+// https://github.com/cubao/geobuf-cpp/blob/dev/src/geobuf/geobuf.hpp
 RapidjsonValue loads(const std::string &json_string, bool raise_error = false);
 std::string dumps(const RapidjsonValue &json, bool indent = false);
+RapidjsonValue load_json(const std::string &path);
+bool dump_json(const std::string &path, const RapidjsonValue &json, //
+               bool indent = false, bool sort_keys = false);
+
+inline void sort_keys_inplace(RapidjsonValue &json)
+{
+    if (json.IsArray()) {
+        for (auto &e : json.GetArray()) {
+            sort_keys_inplace(e);
+        }
+    } else if (json.IsObject()) {
+        auto obj = json.GetObject();
+        // https://rapidjson.docsforge.com/master/sortkeys.cpp/
+        std::sort(obj.MemberBegin(), obj.MemberEnd(), [](auto &lhs, auto &rhs) {
+            return strcmp(lhs.name.GetString(), rhs.name.GetString()) < 0;
+        });
+        for (auto &kv : obj) {
+            sort_keys_inplace(kv.value);
+        }
+    }
+}
+
+inline RapidjsonValue sort_keys(const RapidjsonValue &json)
+{
+    RapidjsonAllocator allocator;
+    RapidjsonValue copy;
+    copy.CopyFrom(json, allocator);
+    sort_keys_inplace(copy);
+    return copy;
+}
+
 } // namespace utils
 } // namespace cubao
