@@ -30,5 +30,10 @@ TEST_CASE("dump nan")
     CHECK_EQ(dbg(utils::dumps(RapidjsonValue(d))), "3.14");
 
     d = std::numeric_limits<double>::quiet_NaN();
-    CHECK_EQ(dbg(utils::dumps(RapidjsonValue(d))), "NaN");
+    CHECK_EQ(dbg(utils::dumps(RapidjsonValue(d), true, true)), "NaN");
+
+    d = std::numeric_limits<double>::infinity();
+    CHECK_EQ(dbg(utils::dumps(RapidjsonValue(d), true, true)), "Infinity");
+    d *= -1;
+    CHECK_EQ(dbg(utils::dumps(RapidjsonValue(d), true, true)), "-Infinity");
 }

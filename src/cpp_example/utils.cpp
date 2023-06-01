@@ -33,15 +33,37 @@ RapidjsonValue loads(const std::string &json, bool raise_error)
     return RapidjsonValue{std::move(d.Move())};
 }
 
-std::string dumps(const RapidjsonValue &json, bool indent)
+std::string dumps(const RapidjsonValue &json, bool indent, bool write_nan_inf)
 {
     rapidjson::StringBuffer buffer;
-    if (indent) {
-        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-        json.Accept(writer);
+    if (write_nan_inf) {
+        if (indent) {
+            rapidjson::PrettyWriter<
+                rapidjson::StringBuffer,
+                rapidjson::UTF8<>,
+                rapidjson::UTF8<>,
+                rapidjson::CrtAllocator,
+                rapidjson::WriteFlag::kWriteNanAndInfFlag
+            > writer(buffer);
+            json.Accept(writer);
+        } else {
+            rapidjson::Writer<
+                rapidjson::StringBuffer,
+                rapidjson::UTF8<>,
+                rapidjson::UTF8<>,
+                rapidjson::CrtAllocator,
+                rapidjson::WriteFlag::kWriteNanAndInfFlag
+            > writer(buffer);
+            json.Accept(writer);
+        }
     } else {
-        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-        json.Accept(writer);
+        if (indent) {
+            rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+            json.Accept(writer);
+        } else {
+            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+            json.Accept(writer);
+        }
     }
     return buffer.GetString();
 }
