@@ -3,6 +3,8 @@
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
 #include <algorithm>
+#include "geometry.hpp"
+#include "naive_svg.hpp"
 
 namespace cubao
 {

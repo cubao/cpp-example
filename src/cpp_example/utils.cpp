@@ -10,6 +10,8 @@
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
 
+#include "geometry.hpp"
+
 namespace cubao
 {
 namespace utils

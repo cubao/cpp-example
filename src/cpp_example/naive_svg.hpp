@@ -12,26 +12,45 @@
 
 namespace cubao
 {
+
 struct SVG
 {
     SVG(double _width = 0, double _height = 0)
         : width(_width), height(_height), grid_step(-1),
-          grid_color(Color::GRAY), background(Color(-1))
+          grid_color(COLOR::GRAY), background(COLOR::NONE)
     {
     }
 
+    enum COLOR
+    {
+        RED = 0xFF0000,
+        GREEN = 0x00FF00, // not css green
+        BLUE = 0x0000FF,
+        YELLOW = 0xFFFF00,
+        WHITE = 0xFFFFFF,
+        GRAY = 0x9B9B9B,
+        BLACK = 0x000000,
+        NONE = -1,
+    };
+
     struct Color
     {
-        int r, g, b;
-        double a;
-        Color(int _r = 0, int _g = 0, int _b = 0, double _a = -1)
+        int r{-1}, g{-1}, b{-1};
+        double a{-1.0};
+        Color(int rgb = -1)
+        {
+            if (rgb > 0) {
+                r = (rgb >> 16) & 0xFF;
+                g = (rgb >> 8) & 0xFF;
+                b = rgb & 0xFF;
+            }
+        }
+        Color(int _r, int _g, int _b, double _a = -1)
             : r(_r), g(_g), b(_b), a(_a)
         {
         }
         bool invalid() const { return r < 0 || g < 0 || b < 0; }
         friend std::ostream &operator<<(std::ostream &out, const Color &c);
-
-        const static Color RED, GREEN, BLUE, YELLOW, WHITE, GRAY, BLACK;
     };
 
     struct Element
@@ -42,8 +61,8 @@ struct SVG
         Color fill;
         Element() {}
         Element(std::vector<std::vector<double>> _points,
-                Color _stroke = Color::BLACK, double _stroke_width = 1,
-                Color _fill = Color(-1))
+                Color _stroke = COLOR::BLACK, double _stroke_width = 1,
+                Color _fill = COLOR::NONE)
             : points(_points), stroke(_stroke), stroke_width(_stroke_width),
               fill(_fill)
         {
@@ -58,8 +77,8 @@ struct SVG
     struct Polyline : Element
     {
         Polyline(std::vector<std::vector<double>> _points,
-                 Color _stroke = Color::BLACK, double _stroke_width = 1.0,
-                 Color _fill = Color(-1))
+                 Color _stroke = COLOR::BLACK, double _stroke_width = 1.0,
+                 Color _fill = COLOR::NONE)
             : Element(_points, _stroke, _stroke_width, _fill)
         {
             fill = _fill;
@@ -73,7 +92,7 @@ struct SVG
     struct Polygon : Polyline
     {
         Polygon(std::vector<std::vector<double>> _points,
-                Color _stroke = Color::BLACK, double _stroke_width = 1.0,
+                Color _stroke = COLOR::BLACK, double _stroke_width = 1.0,
                 Color _fill = Color(-1))
             : Polyline(_points, _stroke, _stroke_width, _fill)
         {
@@ -85,12 +104,12 @@ struct SVG
     struct Circle : Element
     {
         double r;
-        Circle(std::vector<double> _p, double _r, Color _stroke = Color::BLACK,
+        Circle(std::vector<double> _p, double _r, Color _stroke = COLOR::BLACK,
                Color _fill = Color(-1), double _stroke_width = 1.0)
             : Element({_p}, _stroke, _stroke_width, _fill), r(_r)
         {
         }
-        Circle(double _x, double _y, double _r, Color _stroke = Color::BLACK,
+        Circle(double _x, double _y, double _r, Color _stroke = COLOR::BLACK,
                Color _fill = Color(-1), double _stroke_width = 1.0)
             : Circle({_x, _y}, _r, _stroke, _fill, _stroke_width)
         {
@@ -105,12 +124,12 @@ struct SVG
         std::string text;
         double fontsize;
         Text(std::vector<double> _p, std::string _text,
-             Color _fill = Color::BLACK, double _fontsize = 10)
+             Color _fill = COLOR::BLACK, double _fontsize = 10)
             : Element({_p}, _fill), text(_text), fontsize(_fontsize)
         {
         }
         Text(double _x, double _y, std::string _text,
-             Color _fill = Color::BLACK, double _fontsize = 10)
+             Color _fill = COLOR::BLACK, double _fontsize = 10)
             : Text({_x, _y}, _text, _fill, _fontsize)
         {
         }
@@ -141,16 +160,7 @@ std::ostream &operator<<(std::ostream &out, const SVG::Circle &c);
 std::ostream &operator<<(std::ostream &out, const SVG::Text &t);
 std::ostream &operator<<(std::ostream &out, const SVG &s);
 
-// implementation
-const SVG::Color SVG::Color::RED = SVG::Color(255, 0, 0);
-const SVG::Color SVG::Color::GREEN = SVG::Color(0, 255, 0);
-const SVG::Color SVG::Color::BLUE = SVG::Color(0, 0, 255);
-const SVG::Color SVG::Color::YELLOW = SVG::Color(255, 255, 0);
-const SVG::Color SVG::Color::WHITE = SVG::Color(255, 255, 255);
-const SVG::Color SVG::Color::GRAY = SVG::Color(155, 155, 155);
-const SVG::Color SVG::Color::BLACK = SVG::Color(0, 0, 0);
-
-std::ostream &operator<<(std::ostream &out, const SVG::Color &c)
+inline std::ostream &operator<<(std::ostream &out, const SVG::Color &c)
 {
     if (c.invalid()) {
         out << "none";
@@ -164,7 +174,7 @@ std::ostream &operator<<(std::ostream &out, const SVG::Color &c)
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const SVG::Polyline &p)
+inline std::ostream &operator<<(std::ostream &out, const SVG::Polyline &p)
 {
     out << (p.isClosed() ? "<polygon" : "<polyline");
     out << " style='stroke:" << p.stroke      //
@@ -180,7 +190,7 @@ std::ostream &operator<<(std::ostream &out, const SVG::Polyline &p)
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const SVG::Circle &c)
+inline std::ostream &operator<<(std::ostream &out, const SVG::Circle &c)
 {
     out << "<circle r='" << c.r << "'"                  //
         << " cx='" << c.x() << "' cy='" << c.y() << "'" //
@@ -191,7 +201,7 @@ std::ostream &operator<<(std::ostream &out, const SVG::Circle &c)
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const SVG::Text &t)
+inline std::ostream &operator<<(std::ostream &out, const SVG::Text &t)
 {
     out << "<text"                                    //
         << " x='" << t.x() << "' y='" << t.y() << "'" //
@@ -202,7 +212,7 @@ std::ostream &operator<<(std::ostream &out, const SVG::Text &t)
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const SVG &s)
+inline std::ostream &operator<<(std::ostream &out, const SVG &s)
 {
     out << "<svg width='" << s.width << "' height='" << s.height << "'"
         << " xmlns='http://www.w3.org/2000/svg'>";
@@ -212,7 +222,7 @@ std::ostream &operator<<(std::ostream &out, const SVG &s)
             << "'/>";
     }
     if (s.grid_step > 0) {
-        SVG::Color grid_color = SVG::Color::GRAY;
+        SVG::Color grid_color = SVG::COLOR::GRAY;
         if (!s.grid_color.invalid()) {
             grid_color = s.grid_color;
         }
@@ -239,16 +249,16 @@ std::ostream &operator<<(std::ostream &out, const SVG &s)
     return out;
 }
 
-void SVG::save(std::string path) const
+inline void SVG::save(std::string path) const
 {
     std::ofstream file(path);
     file << *this;
     file.close();
 }
 
-void interp(std::vector<std::vector<double>> &points,           //
-            double xmin, double xmax, double ymin, double ymax, //
-            double width, double height)
+inline void interp(std::vector<std::vector<double>> &points,           //
+                   double xmin, double xmax, double ymin, double ymax, //
+                   double width, double height)
 {
     double xspan = xmax - xmin;
     double yspan = ymax - ymin;
@@ -258,7 +268,7 @@ void interp(std::vector<std::vector<double>> &points,           //
     }
 }
 
-void SVG::fit_to_bbox(double xmin, double xmax, double ymin, double ymax)
+inline void SVG::fit_to_bbox(double xmin, double xmax, double ymin, double ymax)
 {
     for (auto &p : polygons) {
         interp(p.points, xmin, xmax, ymin, ymax, width, height);

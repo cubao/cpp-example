@@ -37,12 +37,12 @@ struct Point
     friend std::ostream &operator<<(std::ostream &out, const Point &p);
 };
 
-double dot(const Point &p1, const Point &p2)
+inline double dot(const Point &p1, const Point &p2)
 {
     return p1.x * p2.x + p1.y * p2.y + p1.z * p2.z;
 }
 
-Point cross(const Point &p1, const Point &p2)
+inline Point cross(const Point &p1, const Point &p2)
 {
     double xx = p1.y * p2.z - p2.y * p1.z;
     double yy = p2.x * p1.z - p1.x * p2.z;
@@ -60,7 +60,7 @@ struct Line
     friend std::ostream &operator<<(std::ostream &out, const Line &l);
 };
 
-double dist(const Point &p1, const Point &p2)
+inline double dist(const Point &p1, const Point &p2)
 {
     double dx = p1.x - p2.x;
     double dy = p1.y - p2.y;
@@ -68,15 +68,15 @@ double dist(const Point &p1, const Point &p2)
     return sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-double norm(const Point &p)
+inline double norm(const Point &p)
 {
     Point o;
     return dist(p, o);
 }
 
-double norm(const Line &l) { return dist(l.a, l.b); }
+inline double norm(const Line &l) { return dist(l.a, l.b); }
 
-double dist(const Point &p, const Line &l)
+inline double dist(const Point &p, const Line &l)
 {
     const Point &a = l.a;
     const Point &b = l.b;

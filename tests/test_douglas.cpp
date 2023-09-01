@@ -128,8 +128,8 @@ TEST_CASE("douglas")
     double &width = svg.width;
     double &height = svg.height;
     svg.grid_step = 10;
-    svg.grid_color = SVG::Color::GRAY;
-    svg.background = SVG::Color::WHITE;
+    svg.grid_color = SVG::COLOR::GRAY;
+    svg.background = SVG::COLOR::WHITE;
 
     vector<vector<double>> points{{0, 0}, {0, min_step}};
     for (int i = 0; i < n_points; i++) {
@@ -142,8 +142,8 @@ TEST_CASE("douglas")
     bbox(points, xmin, xmax, ymin, ymax);
 
     auto points_daug = douglas(points, thresh);
-    update_svg(svg, points, SVG::Color(), 1, SVG::Color::RED, 3);
-    update_svg(svg, points_daug, SVG::Color(), 3, SVG::Color::GREEN, 5);
+    update_svg(svg, points, SVG::Color(), 1, SVG::COLOR::RED, 3);
+    update_svg(svg, points_daug, SVG::Color(), 3, SVG::COLOR::GREEN, 5);
 
     double border_width = 20;
     xmin -= border_width;
@@ -155,7 +155,7 @@ TEST_CASE("douglas")
     ss << "#points: " << points.size() << " -> " << points_daug.size();
     cout << ss.str() << endl;
     svg.texts.push_back(
-        SVG::Text({xmin, ymax - 10}, ss.str(), SVG::Color::RED, 24));
+        SVG::Text({xmin, ymax - 10}, ss.str(), SVG::COLOR::RED, 24));
 
     width = xmax - xmin;
     height = ymax - ymin;
