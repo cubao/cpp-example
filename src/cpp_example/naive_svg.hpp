@@ -12,14 +12,40 @@
 
 namespace cubao
 {
+// https://en.wikipedia.org/wiki/Fluent_interface
+// https://rapidjson.org/md_doc_tutorial.html
+// https://www.tutorialspoint.com/what-is-function-chaining-in-javascript
+#ifndef SETUP_FLUENT_API
+#define SETUP_FLUENT_API(Klass, VarType, VarName)                              \
+    Klass &VarName(const VarType &v)                                           \
+    {                                                                          \
+        VarName##_ = v;                                                        \
+        return *this;                                                          \
+    }                                                                          \
+    VarType &VarName() { return VarName##_; }                                  \
+    const VarType &VarName() const { return VarName##_; }
+#endif
+
+#ifndef SETUP_FLUENT_API_FOR_SVG_ELEMENT
+#define SETUP_FLUENT_API_FOR_SVG_ELEMENT(KlassType)                            \
+    SETUP_FLUENT_API(KlassType, Color, stroke)                                 \
+    SETUP_FLUENT_API(KlassType, Color, fill)                                   \
+    SETUP_FLUENT_API(KlassType, double, stroke_width)
+#endif
 
 struct SVG
 {
-    SVG(double _width = 0, double _height = 0)
-        : width(_width), height(_height), grid_step(-1),
-          grid_color(COLOR::GRAY), background(COLOR::NONE)
-    {
-    }
+  private:
+    double width_{-1.0}, height_{-1.0};
+    double grid_step{-1.0};
+    Color grid_color{COLOR::GRAY};
+    Color background{COLOR::NONE};
+    std::vector<std::pair<ELEMENT, void *>> elements_;
+
+  public:
+    using PointType = std::array<double, 2>;
+    SVG() {}
+    SVG(double width, double height) : width_(width), height_(height) {}
 
     enum COLOR
     {
@@ -35,8 +61,6 @@ struct SVG
 
     struct Color
     {
-        int r{-1}, g{-1}, b{-1};
-        double a{-1.0};
         Color(int rgb = -1)
         {
             if (rgb > 0) {
@@ -45,120 +69,116 @@ struct SVG
                 b = rgb & 0xFF;
             }
         }
-        Color(int _r, int _g, int _b, double _a = -1)
+        Color(int _r, int _g, int _b, float _a = -1.f)
             : r(_r), g(_g), b(_b), a(_a)
         {
         }
-        bool invalid() const { return r < 0 || g < 0 || b < 0; }
+        SETUP_FLUENT_API(Color, int, r)
+        SETUP_FLUENT_API(Color, int, g)
+        SETUP_FLUENT_API(Color, int, b)
+        SETUP_FLUENT_API(Color, float, a)
+        bool invalid() const
+        {
+            return r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255;
+        }
         friend std::ostream &operator<<(std::ostream &out, const Color &c);
+
+      private:
+        int r{-1}, g{-1}, b{-1};
+        float a{-1.f};
+    };
+
+    enum ELEMENT
+    {
+        POLYLINE,
+        POLYGON,
+        CIRCLE,
+        TEXT
     };
 
     struct Element
     {
-        std::vector<std::vector<double>> points;
-        Color stroke;
-        double stroke_width;
-        Color fill;
-        Element() {}
-        Element(std::vector<std::vector<double>> _points,
-                Color _stroke = COLOR::BLACK, double _stroke_width = 1,
-                Color _fill = COLOR::NONE)
-            : points(_points), stroke(_stroke), stroke_width(_stroke_width),
-              fill(_fill)
-        {
-            if (fill.invalid()) {
-                fill = stroke;
-            }
-        }
-        double x() const { return points[0][0]; }
-        double y() const { return points[0][1]; }
+      protected:
+        std::vector<PointType> points_;
+        Color stroke_{COLOR::BLACK};
+        double stroke_width_{1.0};
+        Color fill_{COLOR::NONE};
     };
 
     struct Polyline : Element
     {
-        Polyline(std::vector<std::vector<double>> _points,
-                 Color _stroke = COLOR::BLACK, double _stroke_width = 1.0,
-                 Color _fill = COLOR::NONE)
-            : Element(_points, _stroke, _stroke_width, _fill)
-        {
-            fill = _fill;
-        }
+        Polyline(const std::vector<PointType> &points) { points_ = points; }
+        SETUP_FLUENT_API(Polyline, std::vector<SVG::PointType>, points)
+        SETUP_FLUENT_API_FOR_SVG_ELEMENT(Polyline)
         friend std::ostream &operator<<(std::ostream &out,
                                         const SVG::Polyline &p);
-
-        virtual bool isClosed() const { return false; }
     };
 
-    struct Polygon : Polyline
+    struct Polygon : Element
     {
-        Polygon(std::vector<std::vector<double>> _points,
-                Color _stroke = COLOR::BLACK, double _stroke_width = 1.0,
-                Color _fill = Color(-1))
-            : Polyline(_points, _stroke, _stroke_width, _fill)
-        {
-            fill = _fill;
-        }
-        virtual bool isClosed() const { return true; }
+        Polygon(const std::vector<PointType> &points) { points_ = points; }
+        SETUP_FLUENT_API(Polygon, std::vector<SVG::PointType>, points)
+        SETUP_FLUENT_API_FOR_SVG_ELEMENT(Polygon)
+        friend std::ostream &operator<<(std::ostream &out,
+                                        const SVG::Polygon &p);
     };
 
     struct Circle : Element
     {
-        double r;
-        Circle(std::vector<double> _p, double _r, Color _stroke = COLOR::BLACK,
-               Color _fill = Color(-1), double _stroke_width = 1.0)
-            : Element({_p}, _stroke, _stroke_width, _fill), r(_r)
+        Circle(const PointType &p)
         {
+            points_ = {p};
+            r_ = r;
         }
-        Circle(double _x, double _y, double _r, Color _stroke = COLOR::BLACK,
-               Color _fill = Color(-1), double _stroke_width = 1.0)
-            : Circle({_x, _y}, _r, _stroke, _fill, _stroke_width)
+        Circle &center(const PointType &p)
         {
+            points_[0] = v;
+            return *this;
         }
-
+        PointType &center() { return points_[0]; }
+        const PointType &center() const { return points_[0]; }
+        SETUP_FLUENT_API(Circle, double, r)
+        SETUP_FLUENT_API_FOR_SVG_ELEMENT(Circle)
         friend std::ostream &operator<<(std::ostream &out,
                                         const SVG::Circle &c);
+
+      protected:
+        double r_{1.0};
     };
 
     struct Text : Element
     {
-        std::string text;
-        double fontsize;
-        Text(std::vector<double> _p, std::string _text,
-             Color _fill = COLOR::BLACK, double _fontsize = 10)
-            : Element({_p}, _fill), text(_text), fontsize(_fontsize)
+        Text(const PointType &p, const std::string &text)
         {
+            points_ = {p};
+            text_ = text;
         }
-        Text(double _x, double _y, std::string _text,
-             Color _fill = COLOR::BLACK, double _fontsize = 10)
-            : Text({_x, _y}, _text, _fill, _fontsize)
+        Text &position(const PointType &p)
         {
+            points_[0] = v;
+            return *this;
         }
+        PointType &position() { return points_[0]; }
+        const PointType &position() const { return points_[0]; }
+        SETUP_FLUENT_API(Text, std::string, text)
+        SETUP_FLUENT_API(Text, std::vector<std::string>, lines)
+        SETUP_FLUENT_API(Text, double, fontsize)
+        SETUP_FLUENT_API_FOR_SVG_ELEMENT(Text)
 
         friend std::ostream &operator<<(std::ostream &out, const SVG::Text &t);
+
+      protected:
+        std::string text_;
+        std::vector<std::string> lines_;
+        double fontsize_{10.0};
     };
 
     void save(std::string path) const;
 
     void fit_to_bbox(double xmin, double xmax, double ymin, double ymax);
 
-    double width, height;
-    std::vector<Polygon> polygons;
-    std::vector<Polyline> polylines;
-    std::vector<Circle> circles;
-    std::vector<Text> texts;
-
-    double grid_step;
-    Color grid_color;
-    Color background;
-
     friend std::ostream &operator<<(std::ostream &out, const SVG &s);
 };
-
-std::ostream &operator<<(std::ostream &out, const SVG::Color &c);
-std::ostream &operator<<(std::ostream &out, const SVG::Polyline &p);
-std::ostream &operator<<(std::ostream &out, const SVG::Circle &c);
-std::ostream &operator<<(std::ostream &out, const SVG::Text &t);
-std::ostream &operator<<(std::ostream &out, const SVG &s);
 
 inline std::ostream &operator<<(std::ostream &out, const SVG::Color &c)
 {
@@ -176,7 +196,23 @@ inline std::ostream &operator<<(std::ostream &out, const SVG::Color &c)
 
 inline std::ostream &operator<<(std::ostream &out, const SVG::Polyline &p)
 {
-    out << (p.isClosed() ? "<polygon" : "<polyline");
+    out << "<polyline";
+    out << " style='stroke:" << p.stroke      //
+        << ";stroke-width:" << p.stroke_width //
+        << ";fill:" << p.fill                 //
+        << "'";
+    out << " points='";
+    for (auto &pt : p.points) {
+        out << pt[0] << "," << pt[1] << " ";
+    }
+    out << "'";
+    out << " />";
+    return out;
+}
+
+inline std::ostream &operator<<(std::ostream &out, const SVG::Polygon &p)
+{
+    out << "<polygon";
     out << " style='stroke:" << p.stroke      //
         << ";stroke-width:" << p.stroke_width //
         << ";fill:" << p.fill                 //
@@ -201,6 +237,41 @@ inline std::ostream &operator<<(std::ostream &out, const SVG::Circle &c)
     return out;
 }
 
+inline std::string html_escape(const std::string &text)
+{
+    const static std::vector<std::string> escape_map = {
+        "&amp;", "&quot;", "&apos;", "&lt;", "&gt;"};
+    std::map<int, int> replace;
+    for (size_t pos = 0; pos != data.size(); ++pos) {
+        const char c = text[pos];
+        if (c == '&') {
+            replace[pos] = 0;
+        } else if (c == '\"') {
+            replace[pos] = 1;
+        } else if (c == '\'') {
+            replace[pos] = 2;
+        } else if (c == '<') {
+            replace[pos] = 3;
+        } else if (c == '>') {
+            replace[pos] = 4;
+        }
+    }
+    if (replace.empty()) {
+        return text;
+    }
+    std::string buffer;
+    buffer.reserve(text.size() + 6 * replace.size());
+    for (size_t pos = 0; pos != data.size(); ++pos) {
+        auto itr = replace.find(text[pos]);
+        if (itr == replace.end()) {
+            buffer.append(text[pos]);
+        } else {
+            buffer.append(escape_map[itr->second]);
+        }
+    }
+    return buffer;
+}
+
 inline std::ostream &operator<<(std::ostream &out, const SVG::Text &t)
 {
     out << "<text"                                    //
@@ -208,14 +279,25 @@ inline std::ostream &operator<<(std::ostream &out, const SVG::Text &t)
         << " fill='" << t.fill << "'"                 //
         << " font-size='" << t.fontsize << "'"        //
         << " font-family='monospace'"                 //
-        << ">" << t.text << "</text>";
+        << ">" << t.text;
+    if (!t.lines().empty()) {
+        for (auto &line : t.lines()) {
+            out << "<tspan xml:space'preserve' x='" << t.x() << "' dy='"
+                << t.fontsize() / 5.0 << "' fill='" << t.fill() << "'"
+                << " font-size='" << t.fontsize() << "'" //
+                << " font-family='monospace'"            //
+                << ">" << html_escape(line) << "</tspan>";
+        }
+    }
+    out << "</text>";
     return out;
 }
 
 inline std::ostream &operator<<(std::ostream &out, const SVG &s)
 {
     out << "<svg width='" << s.width << "' height='" << s.height << "'"
-        << " xmlns='http://www.w3.org/2000/svg'>";
+        << " xmlns='http://www.w3.org/2000/svg' "
+           "xmlns:xlink='http://www.w3.org/1999/xlink'>";
     if (!s.background.invalid()) {
         out << "\n\t<rect width='100%' height='100%' fill='" //
             << s.background                                  //
@@ -227,24 +309,26 @@ inline std::ostream &operator<<(std::ostream &out, const SVG &s)
             grid_color = s.grid_color;
         }
         for (double i = 0; i < s.height; i += s.grid_step) {
-            out << "\n\t" << SVG::Polyline({{0, i}, {s.width, i}}, grid_color);
+            out << "\n\t"
+                << SVG::Polyline({{0, i}, {s.width, i}}).stroke(grid_color);
         }
         for (double j = 0; j < s.width; j += s.grid_step) {
-            out << "\n\t" << SVG::Polyline({{j, 0}, {j, s.height}}, grid_color);
+            out << "\n\t"
+                << SVG::Polyline({{j, 0}, {j, s.height}}).stroke(grid_color);
         }
     }
-    for (auto &p : s.polygons) {
-        out << "\n\t" << p;
-    }
-    for (auto &p : s.polylines) {
-        out << "\n\t" << p;
-    }
-    for (auto &c : s.circles) {
-        out << "\n\t" << c;
-    }
-    for (auto &t : s.texts) {
-        out << "\n\t" << t;
-    }
+    // for (auto &p : s.polygons) {
+    //     out << "\n\t" << p;
+    // }
+    // for (auto &p : s.polylines) {
+    //     out << "\n\t" << p;
+    // }
+    // for (auto &c : s.circles) {
+    //     out << "\n\t" << c;
+    // }
+    // for (auto &t : s.texts) {
+    //     out << "\n\t" << t;
+    // }
     out << "\n</svg>";
     return out;
 }
