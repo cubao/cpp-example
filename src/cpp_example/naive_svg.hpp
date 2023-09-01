@@ -1,7 +1,8 @@
 #ifndef CUBAO_NAIVE_SVG_HPP
 #define CUBAO_NAIVE_SVG_HPP
 
-// upstream https://github.com/cubao/headers/tree/main/include/cubao/naive_svg.hpp
+// upstream
+// https://github.com/cubao/headers/tree/main/include/cubao/naive_svg.hpp
 // migrated from https://github.com/cubao/naive-svg/blob/master/svg.hpp
 
 #include <fstream>

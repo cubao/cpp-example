@@ -112,7 +112,8 @@ void bbox(const vector<vector<double>> &points, //
     }
 }
 
-TEST_CASE("douglas") {
+TEST_CASE("douglas")
+{
 
     int n_points = 20;
     double madness = 0.5;
