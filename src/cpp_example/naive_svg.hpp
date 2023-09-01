@@ -1,4 +1,8 @@
-#pragma once
+#ifndef CUBAO_NAIVE_SVG_HPP
+#define CUBAO_NAIVE_SVG_HPP
+
+// upstream https://github.com/cubao/headers/tree/main/include/cubao/naive_svg.hpp
+// migrated from https://github.com/cubao/naive-svg/blob/master/svg.hpp
 
 #include <fstream>
 #include <ostream>
@@ -268,3 +272,5 @@ void SVG::fit_to_bbox(double xmin, double xmax, double ymin, double ymax)
     }
 }
 } // namespace cubao
+
+#endif
