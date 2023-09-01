@@ -1,5 +1,5 @@
-#include "naive_svg.hpp"
-#include "encodeURIComponent.hpp"
+#include "cpp_example/naive_svg.hpp"
+#include "cpp_example/encodeURIComponent.hpp"
 
 #include <chrono>
 #include <iostream>

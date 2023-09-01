@@ -1,5 +1,5 @@
-#include "geometry.hpp"
-#include "naive_svg.hpp"
+#include "cpp_example/geometry.hpp"
+#include "cpp_example/naive_svg.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -56,7 +56,7 @@ vector<vector<double>> douglas(const vector<vector<double>> &points,
     Line line(points.front(), points.back());
     int max_index = 1;
     double max_dist = dist(points[max_index], line);
-    for (int i = 2; i < points.size() - 1; i++) {
+    for (size_t i = 2; i < points.size() - 1; i++) {
         double d = dist(points[i], line);
         if (d > max_dist) {
             max_dist = d;

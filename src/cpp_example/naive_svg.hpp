@@ -37,8 +37,9 @@ struct SVG
     struct Element
     {
         std::vector<std::vector<double>> points;
-        Color stroke, fill;
+        Color stroke;
         double stroke_width;
+        Color fill;
         Element() {}
         Element(std::vector<std::vector<double>> _points,
                 Color _stroke = Color::BLACK, double _stroke_width = 1,
