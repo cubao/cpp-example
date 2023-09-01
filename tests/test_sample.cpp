@@ -4,4 +4,8 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-TEST_CASE("dummy") { CHECK(dbg(true)); }
+#include "packedrtree.h"
+
+TEST_CASE("dummy") {
+    using namespace FlatGeobuf;
+}
