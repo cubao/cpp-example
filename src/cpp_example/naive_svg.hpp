@@ -55,7 +55,7 @@ struct SVG
     {
         Color(int rgb = -1 /* NONE */)
         {
-            if (rgb > 0) {
+            if (rgb >= 0) {
                 r_ = (rgb >> 16) & 0xFF;
                 g_ = (rgb >> 8) & 0xFF;
                 b_ = rgb & 0xFF;
@@ -249,6 +249,7 @@ struct SVG
             points_ = {p};
             text_ = text;
             fontsize_ = fontsize;
+            fill_ = COLOR::BLACK;
         }
         Text &position(const PointType &p)
         {
@@ -287,7 +288,7 @@ struct SVG
                 << " fill='" << fill_ << "'"              //
                 << " font-size='" << fontsize_ << "'"     //
                 << " font-family='monospace'"             //
-                << ">" << text_;
+                << ">" << html_escape(text_);
             if (!lines_.empty()) {
                 double fontsize = fontsize_ / 5.0;
                 for (auto &line : lines_) {
@@ -463,19 +464,8 @@ struct SVG
     void fit_to_bbox(double xmin, double xmax, double ymin, double ymax)
     {
         for (auto &pair : elements_) {
-            if (pair.first == ELEMENT::POLYGON) {
-                ((Polygon *)pair.second)
-                    ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
-            } else if (pair.first == ELEMENT::POLYLINE) {
-                ((Polyline *)pair.second)
-                    ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
-            } else if (pair.first == ELEMENT::CIRCLE) {
-                ((Circle *)pair.second)
-                    ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
-            } else if (pair.first == ELEMENT::TEXT) {
-                ((Text *)pair.second)
-                    ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
-            }
+            ((Element *)pair.second)
+                ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
         }
     }
 
@@ -529,5 +519,8 @@ inline std::ostream &operator<<(std::ostream &out, const SVG &s)
 }
 
 } // namespace cubao
+
+#undef SETUP_FLUENT_API
+#undef SETUP_FLUENT_API_FOR_SVG_ELEMENT
 
 #endif

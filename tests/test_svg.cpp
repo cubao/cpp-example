@@ -23,20 +23,21 @@ size_t unix_time()
 
 TEST_CASE("dummy")
 {
-    SVG svg(40, 30);
-    svg.add_circle({10, 10}, 4)
+    SVG svg(500, 400);
+    svg.add_circle({100, 100}, 20)
         .stroke(SVG::COLOR::BLACK)
         .fill(SVG::COLOR::GREEN);
-    svg.add_text({8, 6}, "some text", 8).stroke(SVG::COLOR::RED);
+    svg.add_text({180, 160}, "some text", 32).stroke(SVG::COLOR::RED);
     svg.add_polyline({
-        {1.1, 2.2},
-        {5.1, 3.2},
-        {8.1, 9.2},
+        {110, 2},
+        {310, 222},
+        {400, 300},
     });
-    svg.add_polygon({{6.1, 8.2}, {11.2, 3}, {13.1, 14.2}})
+    svg.add_polygon({{61, 82}, {112, 30}, {131, 142}})
         .stroke(SVG::COLOR::RED)
         .stroke_width(0.5)
         .fill(SVG::Color(255, 255, 0, 0.5));
+    svg.grid_step(10.0);
 
     stringstream ss;
     ss << svg << endl;
