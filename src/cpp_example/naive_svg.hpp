@@ -279,6 +279,16 @@ struct SVG
         SETUP_FLUENT_API(Text, double, fontsize)
         SETUP_FLUENT_API_FOR_SVG_ELEMENT(Text)
 
+        //         // text-anchor="start"
+        //    <style>
+        // * {
+        //     stroke-width: 5px;
+        // }
+        // text {
+        //     font-size: 20px;
+        // }
+        //     </style>
+
         friend std::ostream &operator<<(std::ostream &out, const SVG::Text &e);
 
         void write(std::ostream &out) const
