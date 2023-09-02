@@ -429,16 +429,14 @@ struct SVG
             if (!grid_color_.invalid()) {
                 grid_color = grid_color_;
             }
-            // for (double x = xmin; x < xmax; x += xstep) {
-            //     out << "\n\t"
-            //         << SVG::Polyline({{x, ymin}, {x,
-            //         ymax}}).stroke(grid_color);
-            // }
-            // for (double j = 0; j < s.width; j += s.grid_step) {
-            //     out << "\n\t"
-            //         << SVG::Polyline({{j, 0}, {j,
-            //         s.height}}).stroke(grid_color);
-            // }
+            for (double x = xmin; x < xmax; x += xstep) {
+                out << "\n\t"
+                    << SVG::Polyline({{x, ymin}, {x, ymax}}).stroke(grid_color);
+            }
+            for (double y = ymin; y < ymax; y += ystep) {
+                out << "\n\t"
+                    << SVG::Polyline({{xmin, y}, {xmax, y}}).stroke(grid_color);
+            }
         }
         for (auto &pair : elements_) {
             out << "\n\t";
@@ -464,18 +462,21 @@ struct SVG
 
     void fit_to_bbox(double xmin, double xmax, double ymin, double ymax)
     {
-        // for (auto &p : polygons) {
-        //     interp(p.points, xmin, xmax, ymin, ymax, width, height);
-        // }
-        // for (auto &p : polylines) {
-        //     interp(p.points, xmin, xmax, ymin, ymax, width, height);
-        // }
-        // for (auto &c : circles) {
-        //     interp(c.points, xmin, xmax, ymin, ymax, width, height);
-        // }
-        // for (auto &t : texts) {
-        //     interp(t.points, xmin, xmax, ymin, ymax, width, height);
-        // }
+        for (auto &pair : elements_) {
+            if (pair.first == ELEMENT::POLYGON) {
+                ((Polygon *)pair.second)
+                    ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
+            } else if (pair.first == ELEMENT::POLYLINE) {
+                ((Polyline *)pair.second)
+                    ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
+            } else if (pair.first == ELEMENT::CIRCLE) {
+                ((Circle *)pair.second)
+                    ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
+            } else if (pair.first == ELEMENT::TEXT) {
+                ((Text *)pair.second)
+                    ->fit_into(xmin, ymax, ymin, ymax, width_, height_);
+            }
+        }
     }
 
   private:
