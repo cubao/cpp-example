@@ -5,11 +5,13 @@
 // https://github.com/cubao/headers/tree/main/include/cubao/naive_svg.hpp
 // migrated from https://github.com/cubao/naive-svg/blob/master/svg.hpp
 
-#include <fstream>
-#include <ostream>
-#include <string>
 #include <vector>
 #include <map>
+#include <string>
+
+#include <fstream>
+#include <ostream>
+#include <sstream>
 
 namespace cubao
 {
@@ -72,6 +74,7 @@ struct SVG
                    r_ > 255 || g_ > 255 || b_ > 255;
         }
 
+        friend std::ostream &operator<<(std::ostream &out, const SVG::Color &c);
         void write(std::ostream &out) const
         {
             if (invalid()) {
@@ -132,6 +135,8 @@ struct SVG
         SETUP_FLUENT_API(Polyline, std::vector<SVG::PointType>, points)
         SETUP_FLUENT_API_FOR_SVG_ELEMENT(Polyline)
 
+        friend std::ostream &operator<<(std::ostream &out,
+                                        const SVG::Polyline &e);
         void write(std::ostream &out) const
         {
             out << "<polyline";
@@ -159,6 +164,8 @@ struct SVG
         Polygon(const std::vector<PointType> &points) { points_ = points; }
         SETUP_FLUENT_API(Polygon, std::vector<SVG::PointType>, points)
         SETUP_FLUENT_API_FOR_SVG_ELEMENT(Polygon)
+
+        friend std::ostream &operator<<(std::ostream &out, const Polygon &e);
         void write(std::ostream &out) const
         {
             out << "<polygon";
@@ -172,6 +179,12 @@ struct SVG
             }
             out << "'";
             out << " />";
+        }
+        std::string to_string() const
+        {
+            std::stringstream ss;
+            write(ss);
+            return ss.str();
         }
     };
 
@@ -207,6 +220,8 @@ struct SVG
         SETUP_FLUENT_API(Circle, double, r)
         SETUP_FLUENT_API_FOR_SVG_ELEMENT(Circle)
 
+        friend std::ostream &operator<<(std::ostream &out,
+                                        const SVG::Circle &e);
         void write(std::ostream &out) const
         {
             out << "<circle r='" << r_ << "'"               //
@@ -215,6 +230,12 @@ struct SVG
                 << ";stroke-width:" << stroke_width_        //
                 << ";fill:" << fill_ << "'"                 //
                 << " />";
+        }
+        std::string to_string() const
+        {
+            std::stringstream ss;
+            write(ss);
+            return ss.str();
         }
 
       protected:
@@ -257,6 +278,8 @@ struct SVG
         SETUP_FLUENT_API(Text, double, fontsize)
         SETUP_FLUENT_API_FOR_SVG_ELEMENT(Text)
 
+        friend std::ostream &operator<<(std::ostream &out, const SVG::Text &e);
+
         void write(std::ostream &out) const
         {
             out << "<text"                                //
@@ -265,7 +288,7 @@ struct SVG
                 << " font-size='" << fontsize_ << "'"     //
                 << " font-family='monospace'"             //
                 << ">" << text_;
-            if (!t.lines().empty()) {
+            if (!lines_.empty()) {
                 double fontsize = fontsize_ / 5.0;
                 for (auto &line : lines_) {
                     out << "<tspan xml:space='preserve' x='" << x() //
@@ -277,6 +300,12 @@ struct SVG
                 }
             }
             out << "</text>";
+        }
+        std::string to_string() const
+        {
+            std::stringstream ss;
+            write(ss);
+            return ss.str();
         }
 
         static std::string html_escape(const std::string &text)
@@ -412,7 +441,16 @@ struct SVG
             // }
         }
         for (auto &pair : elements_) {
-            // out << "\n\t" << p;
+            out << "\n\t";
+            if (pair.first == ELEMENT::POLYGON) {
+                ((Polygon *)pair.second)->write(out);
+            } else if (pair.first == ELEMENT::POLYLINE) {
+                ((Polyline *)pair.second)->write(out);
+            } else if (pair.first == ELEMENT::CIRCLE) {
+                ((Circle *)pair.second)->write(out);
+            } else if (pair.first == ELEMENT::TEXT) {
+                ((Text *)pair.second)->write(out);
+            }
         }
         out << "\n</svg>";
     }
@@ -420,7 +458,7 @@ struct SVG
     void save(std::string path) const
     {
         std::ofstream file(path);
-        file << *this;
+        write(file);
         file.close();
     }
 
