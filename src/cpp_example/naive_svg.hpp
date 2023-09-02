@@ -9,6 +9,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace cubao
 {
@@ -87,6 +88,18 @@ struct SVG
 
     struct Element
     {
+        void fit_into(double xmin, double xmax, double ymin, double ymax, //
+                      double width, double height)
+        {
+            // fit bbox[xmin:xmax, ymin:ymax] into viewBox[0:width, 0:height]
+            double xspan = xmax - xmin;
+            double yspan = ymax - ymin;
+            for (auto &pt : points_) {
+                pt[0] = (pt[0] - xmin) / xspan * width;
+                pt[1] = (pt[1] - ymin) / yspan * height;
+            }
+        }
+
       protected:
         std::vector<PointType> points_;
         Color stroke_{COLOR::BLACK};
@@ -195,6 +208,22 @@ struct SVG
     };
 
     SVG(double width, double height) : width_(width), height_(height) {}
+    ~SVG()
+    {
+        for (auto &pair : elements_) {
+            const auto type = pair.first;
+            if (type == ELEMENT::POLYGON) {
+                delete (Polygon *)pair.second;
+            } else if (type == ELEMENT::POLYLINE) {
+                delete (Polyline *)pair.second;
+            } else if (type == ELEMENT::CIRCLE) {
+                delete (Circle *)pair.second;
+            } else if (type == ELEMENT::TEXT) {
+                delete (Text *)pair.second;
+            }
+        }
+    }
+
     SETUP_FLUENT_API(SVG, double, width)
     SETUP_FLUENT_API(SVG, double, height)
     SETUP_FLUENT_API(SVG, double, grid_step)
@@ -202,6 +231,35 @@ struct SVG
     SETUP_FLUENT_API(SVG, std::vector<double>, grid_y)
     SETUP_FLUENT_API(SVG, Color, grid_color)
     SETUP_FLUENT_API(SVG, Color, background)
+
+    Polygon &add_polygon(const std::vector<PointType> &points)
+    {
+        auto ptr = new Polygon(points);
+        elements_.push_back({ELEMENT::POLYGON, (void *)ptr});
+        return *ptr;
+    }
+
+    Polyline &add_polyline(const std::vector<PointType> &points)
+    {
+        auto ptr = new Polyline(points);
+        elements_.push_back({ELEMENT::POLYLINE, (void *)ptr});
+        return *ptr;
+    }
+
+    Circle &add_circle(const PointType &center, double r = 1.0)
+    {
+        auto ptr = new Circle(center, r);
+        elements_.push_back({ELEMENT::CIRCLE, (void *)ptr});
+        return *ptr;
+    }
+
+    Text &add_text(const PointType &position, const std::string &text,
+                   int fontsize = 10.0)
+    {
+        auto ptr = new Text(position, text, fontsize);
+        elements_.push_back({ELEMENT::TEXT, (void *)ptr});
+        return *ptr;
+    }
 
     void save(std::string path) const
     {
@@ -368,24 +426,30 @@ inline std::ostream &operator<<(std::ostream &out, const SVG &s)
             << s.background()                                //
             << "'/>";
     }
-    double xmin = 0, xmax = s.width(), xstep = s.grid_step();
-    double ymin = 0, ymax = s.height(), xstep = s.grid_step();
-    if (s.grid_x_.size() == 3 && s.grid_y_.size() == 3) {
+    double xmin = 0.0, xmax = s.width(), xstep = s.grid_step();
+    double ymin = 0.0, ymax = s.height(), ystep = s.grid_step();
+    if (s.grid_x().size() == 3 && s.grid_y().size() == 3) {
+        xmin = s.grid_x()[0];
+        xmax = s.grid_x()[1];
+        xstep = s.grid_x()[2];
+        ymin = s.grid_y()[0];
+        ymax = s.grid_y()[1];
+        ystep = s.grid_y()[2];
     }
-    // if (s.grid_step > 0) {
-    //     SVG::Color grid_color = SVG::COLOR::GRAY;
-    //     if (!s.grid_color.invalid()) {
-    //         grid_color = s.grid_color;
-    //     }
-    //     for (double i = 0; i < s.height; i += s.grid_step) {
-    //         out << "\n\t"
-    //             << SVG::Polyline({{0, i}, {s.width, i}}).stroke(grid_color);
-    //     }
-    //     for (double j = 0; j < s.width; j += s.grid_step) {
-    //         out << "\n\t"
-    //             << SVG::Polyline({{j, 0}, {j, s.height}}).stroke(grid_color);
-    //     }
-    // }
+    if (xstep > 0 && ystep > 0 && xmin < xmax && ymin < ymax) {
+        SVG::Color grid_color = SVG::COLOR::GRAY;
+        if (!s.grid_color().invalid()) {
+            grid_color = s.grid_color();
+        }
+        // for (double x = xmin; x < xmax; x += xstep) {
+        //     out << "\n\t"
+        //         << SVG::Polyline({{x, ymin}, {x, ymax}}).stroke(grid_color);
+        // }
+        // for (double j = 0; j < s.width; j += s.grid_step) {
+        //     out << "\n\t"
+        //         << SVG::Polyline({{j, 0}, {j, s.height}}).stroke(grid_color);
+        // }
+    }
     // for (auto &p : s.polygons) {
     //     out << "\n\t" << p;
     // }
@@ -402,23 +466,6 @@ inline std::ostream &operator<<(std::ostream &out, const SVG &s)
     return out;
 }
 
-inline void SVG::save(std::string path) const {}
-
-inline void interp(std::vector<std::vector<double>> &points,           //
-                   double xmin, double xmax, double ymin, double ymax, //
-                   double width, double height)
-{
-    double xspan = xmax - xmin;
-    double yspan = ymax - ymin;
-    for (auto &pt : points) {
-        pt[0] = (pt[0] - xmin) / xspan * width;
-        pt[1] = (pt[1] - ymin) / yspan * height;
-    }
-}
-
-inline void SVG::fit_to_bbox(double xmin, double xmax, double ymin, double ymax)
-{
-}
 } // namespace cubao
 
 #endif

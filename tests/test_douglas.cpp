@@ -21,33 +21,33 @@ using namespace cubao;
 
 size_t unix_time();
 
-vector<vector<double>> douglas(const vector<vector<double>> &points,
+vector<SVG::PointType> douglas(const vector<SVG::PointType> &points,
                                double thresh);
 
-void update_svg(SVG &svg, const vector<vector<double>> &points, //
-                SVG::Color line_color, double line_width,       //
-                SVG::Color pt_color, double point_radius);
+void update_svg(SVG &svg, const vector<SVG::PointType> &points,  //
+                const SVG::Color &line_color, double line_width, //
+                const SVG::Color &pt_color, double point_radius);
 
 double rand01();
 
-vector<double> next_random_point(const vector<double> &_p0,
-                                 const vector<double> &_p1, double min_step,
+SVG::PointType next_random_point(const SVG::PointType &_p0,
+                                 const SVG::PointType &_p1, double min_step,
                                  double madness);
 
-void bbox(const vector<vector<double>> &points, //
+void bbox(const vector<SVG::PointType> &points, //
           double &xmin, double &xmax, double &ymin, double &ymax);
 
-void update_svg(SVG &svg, const vector<vector<double>> &points, //
-                SVG::Color line_color, double line_width,       //
-                SVG::Color pt_color, double point_radius)
+void update_svg(SVG &svg, const vector<SVG::PointType> &points,  //
+                const SVG::Color &line_color, double line_width, //
+                const SVG::Color &pt_color, double point_radius)
 {
     for (auto &pt : points) {
-        svg.circles.push_back(SVG::Circle(pt, point_radius, pt_color));
+        svg.add_circle(pt, point_radius).stroke(pt_color);
     }
-    svg.polylines.push_back(SVG::Polyline(points, line_color, line_width));
+    svg.add_polyline(points).stroke(line_color).stroke_width(line_width);
 }
 
-vector<vector<double>> douglas(const vector<vector<double>> &points,
+vector<SVG::PointType> douglas(const vector<SVG::PointType> &points,
                                double thresh)
 {
     if (points.size() <= 2) {
@@ -67,12 +67,12 @@ vector<vector<double>> douglas(const vector<vector<double>> &points,
         return {points.front(), points.back()};
     }
     auto lefts = douglas(
-        vector<vector<double>>(points.begin(), points.begin() + max_index + 1),
+        vector<SVG::PointType>(points.begin(), points.begin() + max_index + 1),
         thresh);
     auto rights = douglas(
-        vector<vector<double>>(points.begin() + max_index, points.end()),
+        vector<SVG::PointType>(points.begin() + max_index, points.end()),
         thresh);
-    vector<vector<double>> ret;
+    vector<SVG::PointType> ret;
     copy(lefts.begin(), lefts.end(), back_inserter(ret));
     copy(rights.begin() + 1, rights.end(), back_inserter(ret));
     return ret;
@@ -86,8 +86,8 @@ size_t unix_time()
 
 double rand01() { return rand() / (double)RAND_MAX; }
 
-vector<double> next_random_point(const vector<double> &_p0,
-                                 const vector<double> &_p1, double min_step,
+SVG::PointType next_random_point(const SVG::PointType &_p0,
+                                 const SVG::PointType &_p1, double min_step,
                                  double madness)
 {
     Point p0(_p0);
@@ -98,10 +98,10 @@ vector<double> next_random_point(const vector<double> &_p0,
     Point delta = p01 + Point(cos(rad) * radius, sin(rad) * radius);
     double scale = max(min_step / norm(delta), 1.0);
     Point pp = p1 + delta * scale;
-    return {pp.x, pp.y, pp.z};
+    return {pp.x, pp.y};
 }
 
-void bbox(const vector<vector<double>> &points, //
+void bbox(const vector<SVG::PointType> &points, //
           double &xmin, double &xmax, double &ymin, double &ymax)
 {
     for (auto &pt : points) {
@@ -124,14 +124,12 @@ TEST_CASE("douglas")
     cout << "min_step: " << min_step << endl;
     cout << "thresh: " << thresh << endl;
 
-    SVG svg;
-    double &width = svg.width;
-    double &height = svg.height;
-    svg.grid_step = 10;
-    svg.grid_color = SVG::COLOR::GRAY;
-    svg.background = SVG::COLOR::WHITE;
+    SVG svg(10, 10);
+    svg.grid_step(10);
+    svg.grid_color(SVG::COLOR::GRAY);
+    svg.background(SVG::COLOR::WHITE);
 
-    vector<vector<double>> points{{0, 0}, {0, min_step}};
+    vector<SVG::PointType> points{{0, 0}, {0, min_step}};
     for (int i = 0; i < n_points; i++) {
         points.push_back(next_random_point(points[points.size() - 2],
                                            points.back(), min_step, madness));
@@ -154,11 +152,10 @@ TEST_CASE("douglas")
     stringstream ss;
     ss << "#points: " << points.size() << " -> " << points_daug.size();
     cout << ss.str() << endl;
-    svg.texts.push_back(
-        SVG::Text({xmin, ymax - 10}, ss.str(), SVG::COLOR::RED, 24));
+    svg.add_text({xmin, ymax - 10}, ss.str(), 24).stroke(SVG::COLOR::RED);
 
-    width = xmax - xmin;
-    height = ymax - ymin;
+    double width = xmax - xmin;
+    double height = ymax - ymin;
     double ratio = height / width;
     if (width > height) {
         width = 1000;
@@ -167,9 +164,8 @@ TEST_CASE("douglas")
         height = 1000;
         width = height / ratio;
     }
-
+    svg.width(width).height(height);
     cout << "width: " << width << " height: " << height << endl;
-
     svg.fit_to_bbox(xmin, xmax, ymin, ymax);
 
     size_t epoch = unix_time();

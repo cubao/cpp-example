@@ -3,6 +3,7 @@
 #include <cmath>
 #include <ostream>
 #include <vector>
+#include <array>
 
 namespace cubao
 {
@@ -15,7 +16,9 @@ struct Point
         : x(_x), y(_y), z(_z)
     {
     }
-    Point(std::vector<double> xyz)
+    Point(const std::array<double, 2> &xy) : Point(xy[0], xy[1]) {}
+    Point(const std::array<double, 3> &xyz) : Point(xyz[0], xyz[1], xyz[2]) {}
+    Point(const std::vector<double> &xyz)
     {
         x = xyz.size() > 0 ? xyz[0] : 0.0;
         y = xyz.size() > 1 ? xyz[1] : 0.0;
