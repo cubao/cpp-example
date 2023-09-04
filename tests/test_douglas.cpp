@@ -1,6 +1,9 @@
 #include "cpp_example/geometry.hpp"
 #include "cpp_example/naive_svg.hpp"
 
+#include <cstdlib> // for std::rand and std::srand
+#include <ctime> // for std::time
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -114,6 +117,7 @@ void bbox(const vector<SVG::PointType> &points, //
 
 TEST_CASE("douglas")
 {
+    std::srand(std::time(0));
 
     int n_points = 20;
     double madness = 0.5;
@@ -140,8 +144,8 @@ TEST_CASE("douglas")
     bbox(points, xmin, xmax, ymin, ymax);
 
     auto points_daug = douglas(points, thresh);
-    update_svg(svg, points, SVG::Color(), 1, SVG::COLOR::RED, 3);
-    update_svg(svg, points_daug, SVG::Color(), 3, SVG::COLOR::GREEN, 5);
+    update_svg(svg, points, SVG::COLOR::RED, 1, SVG::COLOR::RED, 3);
+    update_svg(svg, points_daug, SVG::COLOR::GREEN, 3, SVG::COLOR::GREEN, 5);
 
     double border_width = 20;
     xmin -= border_width;
