@@ -280,7 +280,7 @@ class PackedRTree
         }
     }
 
-    void PackedRTree::fromData(const void *data)
+    void fromData(const void *data)
     {
         auto buf = reinterpret_cast<const uint8_t *>(data);
         const NodeItem *pn = reinterpret_cast<const NodeItem *>(buf);
@@ -307,8 +307,8 @@ class PackedRTree
         generateNodes();
     }
 
-    PackedRTree::PackedRTree(const void *data, const uint64_t numItems,
-                             const uint16_t nodeSize)
+    PackedRTree(const void *data, const uint64_t numItems,
+                const uint16_t nodeSize)
         : _extent(NodeItem::create(0)), _numItems(numItems)
     {
         init(nodeSize);
@@ -404,8 +404,7 @@ class PackedRTree
         return numNodes * sizeof(NodeItem);
     }
 
-    void PackedRTree::streamWrite(
-        const std::function<void(uint8_t *, size_t)> &writeData)
+    void streamWrite(const std::function<void(uint8_t *, size_t)> &writeData)
     {
         writeData(reinterpret_cast<uint8_t *>(_nodeItems),
                   static_cast<size_t>(_numNodes * sizeof(NodeItem)));
