@@ -45,6 +45,6 @@ TEST_CASE("dummy")
 
     size_t epoch = unix_time();
     string path = to_string(epoch) + ".svg";
-    svg.save(path);
+    svg.dump(path);
     cout << "wrote to '" << path << "'" << endl;
 }

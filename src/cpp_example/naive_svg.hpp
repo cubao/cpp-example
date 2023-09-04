@@ -667,7 +667,7 @@ struct SVG
         if (index < 0) {
             index += elements_.size();
         }
-        if (0 <= index && index < elements_.size()) {
+        if (0 <= index && index < (int)elements_.size()) {
             return index;
         }
         return -1;

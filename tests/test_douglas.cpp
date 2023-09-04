@@ -166,10 +166,10 @@ TEST_CASE("douglas")
     }
     svg.width(width).height(height);
     cout << "width: " << width << " height: " << height << endl;
-    svg.fit_to_bbox(xmin, xmax, ymin, ymax);
+    svg.view_box({xmin, ymin, xmax - xmin, ymax - ymin});
 
     size_t epoch = unix_time();
     string path = "test_douglas_" + to_string(epoch) + ".svg";
-    svg.save(path);
+    svg.dump(path);
     cout << "wrote to '" << path << "'" << endl;
 }
