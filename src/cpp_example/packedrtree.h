@@ -280,6 +280,17 @@ class PackedRTree
         }
     }
 
+    void PackedRTree::fromData(const void *data)
+    {
+        auto buf = reinterpret_cast<const uint8_t *>(data);
+        const NodeItem *pn = reinterpret_cast<const NodeItem *>(buf);
+        for (uint64_t i = 0; i < _numNodes; i++) {
+            NodeItem n = *pn++;
+            _nodeItems[i] = n;
+            _extent.expand(n);
+        }
+    }
+
   public:
     ~PackedRTree()
     {
@@ -295,6 +306,15 @@ class PackedRTree
             _nodeItems[_numNodes - _numItems + i] = nodes[i];
         generateNodes();
     }
+
+    PackedRTree::PackedRTree(const void *data, const uint64_t numItems,
+                             const uint16_t nodeSize)
+        : _extent(NodeItem::create(0)), _numItems(numItems)
+    {
+        init(nodeSize);
+        fromData(data);
+    }
+
     std::vector<SearchResultItem> search(double minX, double minY, double maxX,
                                          double maxY) const
     {
@@ -383,6 +403,14 @@ class PackedRTree
         } while (n != 1);
         return numNodes * sizeof(NodeItem);
     }
+
+    void PackedRTree::streamWrite(
+        const std::function<void(uint8_t *, size_t)> &writeData)
+    {
+        writeData(reinterpret_cast<uint8_t *>(_nodeItems),
+                  static_cast<size_t>(_numNodes * sizeof(NodeItem)));
+    }
+
     NodeItem getExtent() const { return _extent; }
 };
 
