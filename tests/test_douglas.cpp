@@ -2,7 +2,7 @@
 #include "cpp_example/naive_svg.hpp"
 
 #include <cstdlib> // for std::rand and std::srand
-#include <ctime> // for std::time
+#include <ctime>   // for std::time
 
 #include <algorithm>
 #include <chrono>

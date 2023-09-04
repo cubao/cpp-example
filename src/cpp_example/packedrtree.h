@@ -54,14 +54,8 @@ struct NodeItem
     double maxX;
     double maxY;
     uint64_t offset;
-    double width() const
-    {
-        return maxX - minX;
-    }
-    double height() const
-    {
-        return maxY - minY;
-    }
+    double width() const { return maxX - minX; }
+    double height() const { return maxY - minY; }
     static NodeItem sum(NodeItem a, const NodeItem &b)
     {
         a.expand(b);
@@ -73,9 +67,11 @@ struct NodeItem
     std::vector<double> toVector();
 };
 
-inline bool operator==(const NodeItem& lhs, const NodeItem& rhs)
+inline bool operator==(const NodeItem &lhs, const NodeItem &rhs)
 {
-    return lhs.minX == rhs.minX && lhs.minY == rhs.minY && lhs.maxX == rhs.maxX && lhs.maxY == rhs.maxY && lhs.offset == rhs.offset;
+    return lhs.minX == rhs.minX && lhs.minY == rhs.minY &&
+           lhs.maxX == rhs.maxX && lhs.maxY == rhs.maxY &&
+           lhs.offset == rhs.offset;
 }
 
 struct Item
@@ -89,7 +85,7 @@ struct SearchResultItem
     uint64_t index;
 };
 
-inline bool operator==(const SearchResultItem& lhs, const SearchResultItem& rhs)
+inline bool operator==(const SearchResultItem &lhs, const SearchResultItem &rhs)
 {
     return lhs.index == rhs.index && lhs.offset == rhs.offset;
 }
@@ -106,9 +102,9 @@ constexpr uint32_t HILBERT_MAX = (1 << 16) - 1;
 template <class ITEM_TYPE>
 NodeItem calcExtent(const std::deque<ITEM_TYPE> &items)
 {
-    return std::accumulate(items.begin(), items.end(), NodeItem::create(0),
-                           [](NodeItem a, const ITEM_TYPE &b)
-                           { return a.expand(b.nodeItem); });
+    return std::accumulate(
+        items.begin(), items.end(), NodeItem::create(0),
+        [](NodeItem a, const ITEM_TYPE &b) { return a.expand(b.nodeItem); });
 }
 
 template <class ITEM_TYPE> void hilbertSort(std::deque<ITEM_TYPE> &items)
@@ -120,8 +116,7 @@ template <class ITEM_TYPE> void hilbertSort(std::deque<ITEM_TYPE> &items)
     const double height = extent.height();
     std::sort(
         items.begin(), items.end(),
-        [minX, minY, width, height](const ITEM_TYPE &a, const ITEM_TYPE &b)
-        {
+        [minX, minY, width, height](const ITEM_TYPE &a, const ITEM_TYPE &b) {
             uint32_t ha =
                 hilbert(a.nodeItem, HILBERT_MAX, minX, minY, width, height);
             uint32_t hb =
@@ -179,6 +174,6 @@ class PackedRTree
     void streamWrite(const std::function<void(uint8_t *, size_t)> &writeData);
 };
 
-}  // namespace FlatGeobuf
+} // namespace FlatGeobuf
 
 #endif

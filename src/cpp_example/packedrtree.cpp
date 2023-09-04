@@ -170,8 +170,7 @@ void hilbertSort(std::vector<std::shared_ptr<Item>> &items)
     const double height = extent.height();
     std::sort(items.begin(), items.end(),
               [minX, minY, width, height](std::shared_ptr<Item> a,
-                                          std::shared_ptr<Item> b)
-              {
+                                          std::shared_ptr<Item> b) {
                   uint32_t ha = hilbert(a->nodeItem, HILBERT_MAX, minX, minY,
                                         width, height);
                   uint32_t hb = hilbert(b->nodeItem, HILBERT_MAX, minX, minY,
@@ -180,7 +179,8 @@ void hilbertSort(std::vector<std::shared_ptr<Item>> &items)
               });
 }
 
-void hilbertSort(std::vector<NodeItem> &items) {
+void hilbertSort(std::vector<NodeItem> &items)
+{
     hilbertSort(items, calcExtent(items));
 }
 
@@ -190,29 +190,28 @@ void hilbertSort(std::vector<NodeItem> &items, const NodeItem &extent)
     const double minY = extent.minY;
     const double width = extent.width();
     const double height = extent.height();
-    std::sort(items.begin(), items.end(),
-              [minX, minY, width, height](const NodeItem &a, const NodeItem &b)
-              {
-                  uint32_t ha =
-                      hilbert(a, HILBERT_MAX, minX, minY, width, height);
-                  uint32_t hb =
-                      hilbert(b, HILBERT_MAX, minX, minY, width, height);
-                  return ha > hb;
-              });
+    std::sort(
+        items.begin(), items.end(),
+        [minX, minY, width, height](const NodeItem &a, const NodeItem &b) {
+            uint32_t ha = hilbert(a, HILBERT_MAX, minX, minY, width, height);
+            uint32_t hb = hilbert(b, HILBERT_MAX, minX, minY, width, height);
+            return ha > hb;
+        });
 }
 
 NodeItem calcExtent(const std::vector<std::shared_ptr<Item>> &items)
 {
     return std::accumulate(items.begin(), items.end(), NodeItem::create(0),
-                           [](NodeItem a, const std::shared_ptr<Item> &b)
-                           { return a.expand(b->nodeItem); });
+                           [](NodeItem a, const std::shared_ptr<Item> &b) {
+                               return a.expand(b->nodeItem);
+                           });
 }
 
 NodeItem calcExtent(const std::vector<NodeItem> &nodes)
 {
-    return std::accumulate(nodes.begin(), nodes.end(), NodeItem::create(0),
-                           [](NodeItem a, const NodeItem &b)
-                           { return a.expand(b); });
+    return std::accumulate(
+        nodes.begin(), nodes.end(), NodeItem::create(0),
+        [](NodeItem a, const NodeItem &b) { return a.expand(b); });
 }
 
 void PackedRTree::init(const uint16_t nodeSize)
@@ -245,8 +244,7 @@ PackedRTree::generateLevelBounds(const uint64_t numItems,
     uint64_t n = numItems;
     uint64_t numNodes = n;
     levelNumNodes.push_back(n);
-    do
-    {
+    do {
         n = (n + nodeSize - 1) / nodeSize;
         numNodes += n;
         levelNumNodes.push_back(n);
@@ -266,13 +264,11 @@ PackedRTree::generateLevelBounds(const uint64_t numItems,
 
 void PackedRTree::generateNodes()
 {
-    for (uint32_t i = 0; i < _levelBounds.size() - 1; i++)
-    {
+    for (uint32_t i = 0; i < _levelBounds.size() - 1; i++) {
         auto pos = _levelBounds[i].first;
         auto end = _levelBounds[i].second;
         auto newpos = _levelBounds[i + 1].first;
-        while (pos < end)
-        {
+        while (pos < end) {
             NodeItem node = NodeItem::create(pos);
             for (uint32_t j = 0; j < _nodeSize && pos < end; j++)
                 node.expand(_nodeItems[pos++]);
@@ -285,8 +281,7 @@ void PackedRTree::fromData(const void *data)
 {
     auto buf = reinterpret_cast<const uint8_t *>(data);
     const NodeItem *pn = reinterpret_cast<const NodeItem *>(buf);
-    for (uint64_t i = 0; i < _numNodes; i++)
-    {
+    for (uint64_t i = 0; i < _numNodes; i++) {
         NodeItem n = *pn++;
         _nodeItems[i] = n;
         _extent.expand(n);
@@ -339,8 +334,7 @@ PackedRTree::search(double minX, double minY, double maxX, double maxY) const
     std::vector<SearchResultItem> results;
     std::unordered_map<uint64_t, uint64_t> queue;
     queue.insert(std::pair<uint64_t, uint64_t>(0, _levelBounds.size() - 1));
-    while (queue.size() != 0)
-    {
+    while (queue.size() != 0) {
         auto next = queue.begin();
         uint64_t nodeIndex = next->first;
         uint64_t level = next->second;
@@ -351,8 +345,7 @@ PackedRTree::search(double minX, double minY, double maxX, double maxY) const
             std::min(static_cast<uint64_t>(nodeIndex + _nodeSize),
                      _levelBounds[static_cast<size_t>(level)].second);
         // search through child nodes
-        for (uint64_t pos = nodeIndex; pos < end; pos++)
-        {
+        for (uint64_t pos = nodeIndex; pos < end; pos++) {
             auto nodeItem = _nodeItems[static_cast<size_t>(pos)];
             if (!n.intersects(nodeItem))
                 continue;
@@ -379,8 +372,7 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
     std::map<uint64_t, uint64_t> queue;
     std::vector<SearchResultItem> results;
     queue.insert(std::pair<uint64_t, uint64_t>(0, levelBounds.size() - 1));
-    while (queue.size() != 0)
-    {
+    while (queue.size() != 0) {
         auto next = queue.begin();
         uint64_t nodeIndex = next->first;
         uint64_t level = next->second;
@@ -393,8 +385,7 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
         readNode(nodesBuf, static_cast<size_t>(nodeIndex * sizeof(NodeItem)),
                  static_cast<size_t>(length * sizeof(NodeItem)));
 #if !CPL_IS_LSB
-        for (size_t i = 0; i < static_cast<size_t>(length); i++)
-        {
+        for (size_t i = 0; i < static_cast<size_t>(length); i++) {
             CPL_LSBPTR64(&nodeItems[i].minX);
             CPL_LSBPTR64(&nodeItems[i].minY);
             CPL_LSBPTR64(&nodeItems[i].maxX);
@@ -403,8 +394,7 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
         }
 #endif
         // search through child nodes
-        for (uint64_t pos = nodeIndex; pos < end; pos++)
-        {
+        for (uint64_t pos = nodeIndex; pos < end; pos++) {
             uint64_t nodePos = pos - nodeIndex;
             auto nodeItem = nodeItems[static_cast<size_t>(nodePos)];
             if (!item.intersects(nodeItem))
@@ -419,10 +409,7 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
     return results;
 }
 
-uint64_t PackedRTree::size() const
-{
-    return _numNodes * sizeof(NodeItem);
-}
+uint64_t PackedRTree::size() const { return _numNodes * sizeof(NodeItem); }
 
 uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
 {
@@ -438,8 +425,7 @@ uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
         throw std::overflow_error("Number of items must be less than 2^56");
     uint64_t n = numItems;
     uint64_t numNodes = n;
-    do
-    {
+    do {
         n = (n + nodeSizeMin - 1) / nodeSizeMin;
         numNodes += n;
     } while (n != 1);
@@ -450,8 +436,7 @@ void PackedRTree::streamWrite(
     const std::function<void(uint8_t *, size_t)> &writeData)
 {
 #if !CPL_IS_LSB
-    for (size_t i = 0; i < static_cast<size_t>(_numNodes); i++)
-    {
+    for (size_t i = 0; i < static_cast<size_t>(_numNodes); i++) {
         CPL_LSBPTR64(&_nodeItems[i].minX);
         CPL_LSBPTR64(&_nodeItems[i].minY);
         CPL_LSBPTR64(&_nodeItems[i].maxX);
@@ -462,8 +447,7 @@ void PackedRTree::streamWrite(
     writeData(reinterpret_cast<uint8_t *>(_nodeItems),
               static_cast<size_t>(_numNodes * sizeof(NodeItem)));
 #if !CPL_IS_LSB
-    for (size_t i = 0; i < static_cast<size_t>(_numNodes); i++)
-    {
+    for (size_t i = 0; i < static_cast<size_t>(_numNodes); i++) {
         CPL_LSBPTR64(&_nodeItems[i].minX);
         CPL_LSBPTR64(&_nodeItems[i].minY);
         CPL_LSBPTR64(&_nodeItems[i].maxX);
@@ -473,9 +457,6 @@ void PackedRTree::streamWrite(
 #endif
 }
 
-NodeItem PackedRTree::getExtent() const
-{
-    return _extent;
-}
+NodeItem PackedRTree::getExtent() const { return _extent; }
 
-}  // namespace FlatGeobuf
+} // namespace FlatGeobuf
