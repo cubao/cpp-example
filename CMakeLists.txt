@@ -29,13 +29,22 @@ foreach(file ${HEADERS})
   install(FILES ${file} DESTINATION "include/${PROJECT_NAME}/${dir}")
 endforeach()
 
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+# ~/miniconda3/envs/py39/include/python3.9
+
+# python3 -c 'import numpy as np; print(np.get_include())'
+include_directories(
+  ${PYTHON_INCLUDE_DIRS}/../../lib/python3.9/site-packages/numpy/core/include)
+# ~/miniconda3/envs/py39/lib/python3.9/site-packages/numpy/core/include
+
 option(BUILD_TESTS "Build tests." ON)
 if(BUILD_TESTS)
   file(GLOB SRCS tests/test_*.cpp)
   foreach(src ${SRCS})
     string(REGEX REPLACE "(^.*/|.cpp$)" "" exe ${src})
     add_executable(${exe} ${src})
-    target_link_libraries(${exe} ${PROJECT_NAME})
+    target_link_libraries(${exe} ${PROJECT_NAME} ${PYTHON_LIBRARIES})
     install(TARGETS ${exe} RUNTIME DESTINATION bin)
   endforeach(src)
 endif()

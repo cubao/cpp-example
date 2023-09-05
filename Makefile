@@ -5,6 +5,9 @@ INSTALL_DIR ?= $(BUILD_DIR)/install
 NUM_JOB ?= 8
 BUILD_TYPE ?= Release
 
+PYTHON_EXECUTABLE ?= $(shell which python3)
+
+
 all:
 	@echo nothing special
 
@@ -22,6 +25,7 @@ lint_install:
 CMAKE_ARGS ?= \
 	-DCMAKE_INSTALL_PREFIX=$(INSTALL_DIR) \
 	-DBUILD_SHARED_LIBS=OFF \
+	-DPYTHON_EXECUTABLE=$(PYTHON_EXECUTABLE) \
 	-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
 build:
 	mkdir -p $(BUILD_DIR) && cd $(BUILD_DIR) && \
