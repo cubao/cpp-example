@@ -23,7 +23,8 @@ void hello();
 
 // https://github.com/cubao/geobuf-cpp/blob/dev/src/geobuf/geobuf.hpp
 RapidjsonValue loads(const std::string &json_string, bool raise_error = false);
-std::string dumps(const RapidjsonValue &json, bool indent = false, bool write_nan_inf = false);
+std::string dumps(const RapidjsonValue &json, bool indent = false,
+                  bool write_nan_inf = false);
 RapidjsonValue load_json(const std::string &path);
 bool dump_json(const std::string &path, const RapidjsonValue &json, //
                bool indent = false, bool sort_keys = false);

@@ -32,7 +32,6 @@ repos:
   - id: mixed-line-ending
   - id: requirements-txt-fixer
   - id: trailing-whitespace
-  - id: end-of-file-fixer
 
 # Black, the code formatter, natively supports pre-commit
 - repo: https://github.com/psf/black
@@ -43,7 +42,7 @@ repos:
 
 # Sort your imports in a standard form
 - repo: https://github.com/PyCQA/isort
-  rev: 5.10.1
+  rev: 5.11.5
   hooks:
   - id: isort
 
@@ -61,7 +60,7 @@ repos:
   - id: remove-tabs
     exclude: ^(docs|Makefile)
 
-- repo: https://github.com/pycqa/flake8
+- repo: https://github.com/PyCQA/flake8
   rev: 3.9.2
   hooks:
   - id: flake8
