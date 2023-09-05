@@ -8,10 +8,12 @@ auto_build_type_and_compile_flags()
 configure_output_directories()
 configure_version_h()
 
+set(CMAKE_CXX_STANDARD 14)
+
 include_directories(BEFORE ${CUBAO_INCLUDE})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14") set(CMAKE_CXX_FLAGS
+# "${CMAKE_CXX_FLAGS} -Wall -Werror") set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall
+# -Werror")
 
 include_directories(BEFORE ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src)
 set(HEADER_ROOT "${PROJECT_SOURCE_DIR}/src/${PROJECT_NAME}")

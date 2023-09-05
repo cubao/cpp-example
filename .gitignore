@@ -12,3 +12,6 @@ build
 
 data/*
 !data/Makefile
+*.pdf
+*.png
+*.svg
