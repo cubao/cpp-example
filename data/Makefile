@@ -12,4 +12,4 @@ clean:
 
 pull: schema
 schema:
-	wget https://json-schema.org/draft/2020-12/schema
+	curl -kLO https://json-schema.org/draft/2020-12/schema
