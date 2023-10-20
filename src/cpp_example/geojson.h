@@ -4,6 +4,7 @@
 #include <mapbox/geometry.hpp>
 #include <mapbox/geometry/envelope.hpp>
 #include <mapbox/feature.hpp>
+#include "dbg.h"
 
 #include <iostream>
 #include <algorithm>
@@ -73,6 +74,9 @@ const ColumnType toColumnType(value value)
         return ColumnType::Double;
     if (value.is<std::string>())
         return ColumnType::String;
+    return ColumnType::Json;
+    // if (value.is<value::object_type>() || value.is<value::array_type>()) {
+    // }
     throw std::invalid_argument("toColumnType: Unknown column type");
 }
 
@@ -128,6 +132,7 @@ writeFeature(const feature &f,
 {
     FlatBufferBuilder fbb;
     std::vector<double> coords;
+    std::vector<double> zs;
     std::vector<uint32_t> ends;
     std::vector<uint32_t> endss;
     if (f.geometry.is<multi_line_string>()) {
@@ -163,15 +168,16 @@ writeFeature(const feature &f,
             }
         }*/
     }
-    for_each_point(f.geometry, [&coords](auto p) {
+    for_each_point(f.geometry, [&coords, &zs](auto p) {
         coords.push_back(p.x);
         coords.push_back(p.y);
+        zs.push_back(p.z);
     });
     auto pEnds = ends.size() == 0 ? nullptr : &ends;
     std::vector<uint8_t> properties;
     parseProperties(f.properties, properties, columnMetas);
     auto pProperties = properties.size() == 0 ? nullptr : &properties;
-    auto geometry = CreateGeometryDirect(fbb, pEnds, &coords, nullptr, nullptr,
+    auto geometry = CreateGeometryDirect(fbb, pEnds, &coords, &zs, nullptr,
                                          nullptr, nullptr);
     auto feature = CreateFeatureDirect(fbb, geometry, pProperties);
     fbb.FinishSizePrefixed(feature);
@@ -503,7 +509,7 @@ const void serialize(const feature_collection &fc,
     const std::function<const feature *()> readFeature = [&fc, &i, &size]() {
         return i < size ? &(fc[i++]) : nullptr;
     };
-    serialize(readFeature, writeData, fc.size(), createIndex);
+    serialize(readFeature, writeData, size, createIndex);
 }
 
 const void serialize(std::vector<uint8_t> &flatgeobuf,

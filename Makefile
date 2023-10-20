@@ -3,7 +3,7 @@ PROJECT_NAME ?= $(basename $(PROJECT_SOURCE_DIR))
 BUILD_DIR ?= $(PROJECT_SOURCE_DIR)/build
 INSTALL_DIR ?= $(BUILD_DIR)/install
 NUM_JOB ?= 8
-BUILD_TYPE ?= Release
+BUILD_TYPE ?= Debug
 
 all:
 	@echo nothing special

@@ -61,19 +61,24 @@ inline std::string dumps(const RapidjsonValue &json, bool indent = false)
 
 int main(int argc, char **argv)
 {
-    FILE *fp = fopen(argv[2], "wb");
+    // std::string input = argv[1];
+    // std::string output = argv[2];
+    std::string input = "/home/tzx/git/LNI-diff/build/us08.geojson";
+    std::string output = "/home/tzx/git/cpp-example/build/output.fgb";
+
+    FILE *fp = fopen(output.c_str(), "wb");
     if (!fp) {
         return -1;
     }
-    std::cout << "reading " << argv[1] << std::endl;
-    auto json = load_json(argv[1]);
+    std::cout << "reading " << input << std::endl;
+    auto json = load_json(input.c_str());
     // std::cout << dumps(json) << std::endl;
     auto geojson = mapbox::geojson::convert(json);
     std::vector<uint8_t> flatgeobuf;
     bool createIndex = true;
     serialize(flatgeobuf, geojson.get<mapbox::geojson::feature_collection>(),
               createIndex);
-    std::cout << "writing " << argv[2] << std::endl;
+    std::cout << "writing " << output << std::endl;
     size_t nbytes = fwrite((char *)&flatgeobuf[0], 1, flatgeobuf.size(), fp);
     return flatgeobuf.size() == nbytes ? 0 : -1;
 }
