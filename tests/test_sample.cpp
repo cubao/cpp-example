@@ -63,7 +63,7 @@ TEST_CASE("canvas")
         nodes.push_back({x, y, x + w, y + h, (uint64_t)i});
     }
     auto extent = calcExtent(nodes);
-    hilbertSort(nodes);
+    hilbertSort(nodes, extent);
     auto rtree = PackedRTree(nodes, extent);
 
     double xmin = (double)dist_x(engine);
