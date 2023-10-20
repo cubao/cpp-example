@@ -11,6 +11,7 @@
 #include <vector>
 #include <functional>
 
+#include "rapidjson/stringbuffer.h"
 #include "flatbuffers/flatbuffers.h"
 #include "header_generated.h"
 #include "feature_generated.h"
@@ -118,6 +119,26 @@ parseProperties(const mapbox::feature::property_map &property_map,
                       reinterpret_cast<const uint8_t *>(&len + 1),
                       std::back_inserter(properties));
             std::copy(str.begin(), str.end(), std::back_inserter(properties));
+        } else if (type == ColumnType::Bool) {
+            uint8_t val = value.get<bool>();
+            std::copy(reinterpret_cast<const uint8_t *>(&val),
+                      reinterpret_cast<const uint8_t *>(&val + 1),
+                      std::back_inserter(properties));
+        } else if (type == ColumnType::Json) {
+            // mapbox::geojson::rapidjson_allocator allocator;
+            // auto json = mapbox::geojson::convert(value, allocator);
+            // rapidjson::StringBuffer buffer;
+            // rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+            // json.Accept(writer);
+            // std::string str(buffer.GetString(), buffer.GetSize());
+            // if (str.length() >= std::numeric_limits<uint32_t>::max())
+            //     throw std::invalid_argument("JSON String too long");
+            // uint32_t len = static_cast<uint32_t>(str.length());
+            // std::copy(reinterpret_cast<const uint8_t *>(&len),
+            //           reinterpret_cast<const uint8_t *>(&len + 1),
+            //           std::back_inserter(properties));
+            // std::copy(str.begin(), str.end(),
+            // std::back_inserter(properties));
         } else {
             throw std::invalid_argument(
                 "parseProperties: Unknown property type");
