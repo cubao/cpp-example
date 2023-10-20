@@ -204,6 +204,14 @@ inline NodeItem calcExtent(const std::vector<NodeItem> &nodes)
         [](NodeItem a, const NodeItem &b) { return a.expand(b); });
 }
 
+inline NodeItem calcExtent(const std::vector<std::shared_ptr<Item>> &items)
+{
+    return std::accumulate(items.begin(), items.end(), NodeItem::create(0),
+                           [](NodeItem a, const std::shared_ptr<Item> &b) {
+                               return a.expand(b->nodeItem);
+                           });
+}
+
 template <class ITEM_TYPE> void hilbertSort(std::deque<ITEM_TYPE> &items)
 {
     NodeItem extent = calcExtent(items);
@@ -297,6 +305,16 @@ class PackedRTree
         if (_nodeItems != nullptr)
             delete[] _nodeItems;
     }
+    PackedRTree(const std::vector<std::shared_ptr<Item>> &items,
+                const NodeItem &extent, const uint16_t nodeSize = 16)
+        : _extent(extent), _numItems(items.size())
+    {
+        init(nodeSize);
+        for (size_t i = 0; i < _numItems; i++)
+            _nodeItems[_numNodes - _numItems + i] = items[i]->nodeItem;
+        generateNodes();
+    }
+
     PackedRTree(const std::vector<NodeItem> &nodes, const NodeItem &extent,
                 const uint16_t nodeSize = 16)
         : _extent(extent), _numItems(nodes.size())
@@ -313,6 +331,15 @@ class PackedRTree
     {
         init(nodeSize);
         fromData(data);
+    }
+    PackedRTree(std::function<void(NodeItem *)> fillNodeItems,
+                const uint64_t numItems, const NodeItem &extent,
+                const uint16_t nodeSize = 16)
+        : _extent(extent), _numItems(numItems)
+    {
+        init(nodeSize);
+        fillNodeItems(_nodeItems + _numNodes - _numItems);
+        generateNodes();
     }
 
     std::vector<SearchResultItem> search(double minX, double minY, double maxX,
@@ -337,6 +364,49 @@ class PackedRTree
             for (uint64_t pos = nodeIndex; pos < end; pos++) {
                 auto nodeItem = _nodeItems[static_cast<size_t>(pos)];
                 if (!n.intersects(nodeItem))
+                    continue;
+                if (isLeafNode)
+                    results.push_back({nodeItem.offset, pos - leafNodesOffset});
+                else
+                    queue.insert(std::pair<uint64_t, uint64_t>(nodeItem.offset,
+                                                               level - 1));
+            }
+        }
+        return results;
+    }
+    static std::vector<SearchResultItem>
+    streamSearch(const uint64_t numItems, const uint16_t nodeSize,
+                 const NodeItem &item,
+                 const std::function<void(uint8_t *, size_t, size_t)> &readNode)
+    {
+        auto levelBounds = generateLevelBounds(numItems, nodeSize);
+        uint64_t leafNodesOffset = levelBounds.front().first;
+        uint64_t numNodes = levelBounds.front().second;
+        auto nodeItems = std::vector<NodeItem>(nodeSize);
+        uint8_t *nodesBuf = reinterpret_cast<uint8_t *>(nodeItems.data());
+        // use ordered search queue to make index traversal in sequential order
+        std::map<uint64_t, uint64_t> queue;
+        std::vector<SearchResultItem> results;
+        queue.insert(std::pair<uint64_t, uint64_t>(0, levelBounds.size() - 1));
+        while (queue.size() != 0) {
+            auto next = queue.begin();
+            uint64_t nodeIndex = next->first;
+            uint64_t level = next->second;
+            queue.erase(next);
+            bool isLeafNode = nodeIndex >= numNodes - numItems;
+            // find the end index of the node
+            uint64_t end =
+                std::min(static_cast<uint64_t>(nodeIndex + nodeSize),
+                         levelBounds[static_cast<size_t>(level)].second);
+            uint64_t length = end - nodeIndex;
+            readNode(nodesBuf,
+                     static_cast<size_t>(nodeIndex * sizeof(NodeItem)),
+                     static_cast<size_t>(length * sizeof(NodeItem)));
+            // search through child nodes
+            for (uint64_t pos = nodeIndex; pos < end; pos++) {
+                uint64_t nodePos = pos - nodeIndex;
+                auto nodeItem = nodeItems[static_cast<size_t>(nodePos)];
+                if (!item.intersects(nodeItem))
                     continue;
                 if (isLeafNode)
                     results.push_back({nodeItem.offset, pos - leafNodesOffset});
