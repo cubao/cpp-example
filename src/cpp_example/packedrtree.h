@@ -93,6 +93,10 @@ struct NodeItem
             return false;
         return true;
     }
+    std::vector<double> toVector() const
+    {
+        return std::vector<double>{minX, minY, maxX, maxY};
+    }
 };
 
 inline bool operator==(const NodeItem &lhs, const NodeItem &rhs)
@@ -194,7 +198,6 @@ inline uint32_t hilbert(const NodeItem &r, uint32_t hilbertMax,
     v = hilbert(x, y);
     return v;
 }
-
 constexpr uint32_t HILBERT_MAX = (1 << 16) - 1;
 
 inline NodeItem calcExtent(const std::vector<NodeItem> &nodes)
@@ -247,6 +250,24 @@ inline void hilbertSort(std::vector<NodeItem> &items, const NodeItem &extent)
 inline void hilbertSort(std::vector<NodeItem> &items)
 {
     hilbertSort(items, calcExtent(items));
+}
+
+inline void hilbertSort(std::vector<std::shared_ptr<Item>> &items)
+{
+    NodeItem extent = calcExtent(items);
+    const double minX = extent.minX;
+    const double minY = extent.minY;
+    const double width = extent.width();
+    const double height = extent.height();
+    std::sort(items.begin(), items.end(),
+              [minX, minY, width, height](std::shared_ptr<Item> a,
+                                          std::shared_ptr<Item> b) {
+                  uint32_t ha = hilbert(a->nodeItem, HILBERT_MAX, minX, minY,
+                                        width, height);
+                  uint32_t hb = hilbert(b->nodeItem, HILBERT_MAX, minX, minY,
+                                        width, height);
+                  return ha > hb;
+              });
 }
 
 /**
