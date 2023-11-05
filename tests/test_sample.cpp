@@ -4,7 +4,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-#include "mbgl/style_expression/conversion.hpp"
 #include "mbgl/style_expression/enum.hpp"
 #include "mbgl/style_expression/expression.hpp"
 #include "mbgl/style_expression/feature.hpp"
