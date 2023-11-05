@@ -18,7 +18,7 @@ namespace expression
 struct Value;
 
 using ValueBase = variant<
-    NullValue, bool, double, std::string, Color, Collator, Formatted, Image,
+    NullValue, bool, double, std::string,
     mapbox::util::recursive_wrapper<std::vector<Value>>,
     mapbox::util::recursive_wrapper<std::unordered_map<std::string, Value>>>;
 struct Value : ValueBase
@@ -108,13 +108,6 @@ template <typename T> struct ValueConverter<std::vector<T>>
     }
     static Value toExpressionValue(const std::vector<T> &value);
     static optional<std::vector<T>> fromExpressionValue(const Value &value);
-};
-
-template <> struct ValueConverter<Position>
-{
-    static type::Type expressionType() { return type::Array(type::Number, 3); }
-    static Value toExpressionValue(const mbgl::style::Position &value);
-    static optional<Position> fromExpressionValue(const Value &v);
 };
 
 template <typename T>

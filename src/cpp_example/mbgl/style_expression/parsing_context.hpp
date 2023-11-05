@@ -164,14 +164,14 @@ class ParsingContext
     void error(std::string message, std::size_t child)
     {
         errors->push_back(
-            {std::move(message), key + "[" + util::toString(child) + "]"});
+            {std::move(message), key + "[" + std::to_string(child) + "]"});
     }
 
     void error(std::string message, std::size_t child, std::size_t grandchild)
     {
         errors->push_back(
-            {std::move(message), key + "[" + util::toString(child) + "][" +
-                                     util::toString(grandchild) + "]"});
+            {std::move(message), key + "[" + std::to_string(child) + "][" +
+                                     std::to_string(grandchild) + "]"});
     }
 
     void appendErrors(ParsingContext &&ctx)

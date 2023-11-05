@@ -92,7 +92,7 @@ struct Array
     std::string getName() const
     {
         if (N) {
-            return "array<" + toString(itemType) + ", " + util::toString(*N) +
+            return "array<" + toString(itemType) + ", " + std::to_string(*N) +
                    ">";
         } else if (itemType == Value) {
             return "array";

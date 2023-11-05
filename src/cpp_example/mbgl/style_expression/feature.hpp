@@ -28,9 +28,9 @@ inline optional<std::string> featureIDtoString(const FeatureIdentifier &id)
 
     return id.match(
         [](const std::string &value_) { return value_; },
-        [](uint64_t value_) { return util::toString(value_); },
-        [](int64_t value_) { return util::toString(value_); },
-        [](double value_) { return util::toString(value_); },
+        [](uint64_t value_) { return std::to_string(value_); },
+        [](int64_t value_) { return std::to_string(value_); },
+        [](double value_) { return std::to_string(value_); },
         [](const auto &) -> optional<std::string> { return nullopt; });
 }
 

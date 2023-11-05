@@ -92,7 +92,7 @@ ParseResult ParsingContext::parse(
     optional<type::Type> expected_,
     const optional<TypeAnnotationOption> &typeAnnotationOption)
 {
-    ParsingContext child(key + "[" + util::toString(index_) + "]", errors,
+    ParsingContext child(key + "[" + util::to_string(index_) + "]", errors,
                          std::move(expected_), scope);
     return child.parse(value, typeAnnotationOption);
 }
@@ -102,7 +102,7 @@ ParseResult ParsingContext::parse(
     optional<type::Type> expected_,
     const std::map<std::string, std::shared_ptr<Expression>> &bindings)
 {
-    ParsingContext child(key + "[" + util::toString(index_) + "]", errors,
+    ParsingContext child(key + "[" + std::to_string(index_) + "]", errors,
                          std::move(expected_),
                          std::make_shared<detail::Scope>(bindings, scope));
     return child.parse(value);
@@ -217,12 +217,6 @@ ParseResult ParsingContext::parse(
             parsed = {annotate(
                 std::move(*parsed), *expected,
                 typeAnnotationOption.value_or(TypeAnnotationOption::assert))};
-        } else if ((*expected == type::Color || *expected == type::Formatted ||
-                    *expected == type::Image) &&
-                   (actual == type::Value || actual == type::String)) {
-            parsed = {annotate(
-                std::move(*parsed), *expected,
-                typeAnnotationOption.value_or(TypeAnnotationOption::coerce))};
         } else {
             checkType((*parsed)->getType());
             if (!errors->empty()) {
