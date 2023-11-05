@@ -1,4 +1,4 @@
-#include <mbgl/style/expression/at.hpp>
+#include "../at.hpp"
 
 namespace mbgl
 {

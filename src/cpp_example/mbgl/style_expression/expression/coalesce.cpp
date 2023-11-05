@@ -1,5 +1,5 @@
-#include <mbgl/style/expression/coalesce.hpp>
-#include <mbgl/style/expression/check_subtype.hpp>
+#include "coalesce.hpp"
+#include "check_subtype.hpp"
 
 namespace mbgl
 {

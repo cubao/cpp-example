@@ -1,19 +1,18 @@
-#include <mbgl/style/expression/assertion.hpp>
-#include <mbgl/style/expression/coercion.hpp>
-#include <mbgl/style/expression/comparison.hpp>
-#include <mbgl/style/expression/compound_expression.hpp>
-#include <mbgl/style/expression/dsl.hpp>
-#include <mbgl/style/expression/dsl_impl.hpp>
-#include <mbgl/style/expression/error.hpp>
-#include <mbgl/style/expression/format_expression.hpp>
-#include <mbgl/style/expression/image_expression.hpp>
-#include <mbgl/style/expression/interpolate.hpp>
-#include <mbgl/style/expression/literal.hpp>
-#include <mbgl/style/expression/step.hpp>
+#include "assertion.hpp"
+#include "coercion.hpp"
+#include "comparison.hpp"
+#include "compound_expression.hpp"
+#include "dsl.hpp"
+#include "dsl_impl.hpp"
+#include "error.hpp"
+#include "format_expression.hpp"
+#include "image_expression.hpp"
+#include "interpolate.hpp"
+#include "literal.hpp"
+#include "step.hpp"
 
 #include <rapidjson/document.h>
 #include <mapbox/geojsonvt.hpp>
-#include <mbgl/style/conversion/json.hpp>
 #include <utility>
 
 namespace mbgl

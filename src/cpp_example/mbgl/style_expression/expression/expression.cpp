@@ -1,4 +1,4 @@
-#include <mbgl/style/expression/compound_expression.hpp>
+#include "compound_expression.hpp"
 #include "../expression.hpp"
 #include <utility>
 

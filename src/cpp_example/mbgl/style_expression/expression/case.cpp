@@ -1,5 +1,4 @@
-#include <mbgl/style/expression/case.hpp>
-#include <mbgl/util/string.hpp>
+#include "case.hpp"
 
 namespace mbgl
 {
