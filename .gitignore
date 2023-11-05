@@ -12,3 +12,4 @@ build
 
 data/*
 !data/Makefile
+*.svg
