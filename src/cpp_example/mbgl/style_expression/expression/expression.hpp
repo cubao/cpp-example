@@ -116,7 +116,6 @@ enum class Kind : int32_t
     Step,
     Let,
     Var,
-    CollatorExpression,
     Coercion,
     Match,
     Error,
@@ -124,13 +123,8 @@ enum class Kind : int32_t
     Any,
     All,
     Comparison,
-    FormatExpression,
-    FormatSectionOverride,
     NumberFormat,
-    ImageExpression,
-    In,
-    Within,
-    Distance
+    In
 };
 
 class Expression

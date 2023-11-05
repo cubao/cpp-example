@@ -273,23 +273,6 @@ concat(std::vector<std::unique_ptr<Expression>> inputs)
     return compound("concat", std::move(inputs));
 }
 
-std::unique_ptr<Expression> format(const char *value)
-{
-    return std::make_unique<Literal>(Formatted(value));
-}
-
-std::unique_ptr<Expression> format(std::unique_ptr<Expression> input)
-{
-    std::vector<FormatExpressionSection> sections{
-        FormatExpressionSection(std::move(input))};
-    return std::make_unique<FormatExpression>(std::move(sections));
-}
-
-std::unique_ptr<Expression> image(const char *value)
-{
-    return std::make_unique<Literal>(Image(value));
-}
-
 std::unique_ptr<Expression> image(std::unique_ptr<Expression> expression)
 {
     return std::make_unique<ImageExpression>(std::move(expression));

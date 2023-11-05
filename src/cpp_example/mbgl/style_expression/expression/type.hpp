@@ -72,45 +72,19 @@ struct ValueType
     bool operator==(const ValueType &) const { return true; }
 };
 
-struct CollatorType
-{
-    constexpr CollatorType() = default;
-    std::string getName() const { return "collator"; }
-    bool operator==(const CollatorType &) const { return true; }
-};
-
-struct FormattedType
-{
-    constexpr FormattedType() = default;
-    std::string getName() const { return "formatted"; }
-    bool operator==(const FormattedType &) const { return true; }
-};
-
-struct ImageType
-{
-    constexpr ImageType() = default;
-    std::string getName() const { return "resolvedImage"; }
-    bool operator==(const ImageType &) const { return true; }
-};
-
 constexpr NullType Null;
 constexpr NumberType Number;
 constexpr StringType String;
 constexpr BooleanType Boolean;
-constexpr ColorType Color;
 constexpr ValueType Value;
 constexpr ObjectType Object;
-constexpr CollatorType Collator;
-constexpr FormattedType Formatted;
 constexpr ErrorType Error;
-constexpr ImageType Image;
 
 struct Array;
 
 using Type =
-    variant<NullType, NumberType, BooleanType, StringType, ColorType,
-            ObjectType, ValueType, mapbox::util::recursive_wrapper<Array>,
-            CollatorType, FormattedType, ErrorType, ImageType>;
+    variant<NullType, NumberType, BooleanType, StringType, ObjectType,
+            ValueType, mapbox::util::recursive_wrapper<Array>, ErrorType>;
 
 struct Array
 {

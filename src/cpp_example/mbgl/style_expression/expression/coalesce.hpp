@@ -2,7 +2,6 @@
 
 #include "../expression.hpp"
 #include "../parsing_context.hpp"
-#include <mbgl/style/conversion.hpp>
 
 #include <memory>
 #include <map>

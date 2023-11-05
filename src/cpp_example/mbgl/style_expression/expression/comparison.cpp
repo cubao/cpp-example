@@ -65,31 +65,6 @@ bool gteq(const Value &lhs, const Value &rhs)
         });
 }
 
-bool eqCollate(const std::string &a, const std::string &b, const Collator &c)
-{
-    return c.compare(a, b) == 0;
-}
-bool neqCollate(const std::string &a, const std::string &b, const Collator &c)
-{
-    return !eqCollate(a, b, c);
-}
-bool ltCollate(const std::string &a, const std::string &b, const Collator &c)
-{
-    return c.compare(a, b) < 0;
-}
-bool gtCollate(const std::string &a, const std::string &b, const Collator &c)
-{
-    return c.compare(a, b) > 0;
-}
-bool lteqCollate(const std::string &a, const std::string &b, const Collator &c)
-{
-    return c.compare(a, b) <= 0;
-}
-bool gteqCollate(const std::string &a, const std::string &b, const Collator &c)
-{
-    return c.compare(a, b) >= 0;
-}
-
 static BasicComparison::CompareFunctionType
 getBasicCompareFunction(const std::string &op)
 {
@@ -105,25 +80,6 @@ getBasicCompareFunction(const std::string &op)
         return gteq;
     else if (op == "<=")
         return lteq;
-    assert(false);
-    return nullptr;
-}
-
-static CollatorComparison::CompareFunctionType
-getCollatorComparisonFunction(const std::string &op)
-{
-    if (op == "==")
-        return eqCollate;
-    else if (op == "!=")
-        return neqCollate;
-    else if (op == ">")
-        return gtCollate;
-    else if (op == "<")
-        return ltCollate;
-    else if (op == ">=")
-        return gteqCollate;
-    else if (op == "<=")
-        return lteqCollate;
     assert(false);
     return nullptr;
 }
@@ -195,76 +151,6 @@ std::vector<optional<Value>> BasicComparison::possibleOutputs() const
     return {{true}, {false}};
 }
 
-CollatorComparison::CollatorComparison(std::string op_,
-                                       std::unique_ptr<Expression> lhs_,
-                                       std::unique_ptr<Expression> rhs_,
-                                       std::unique_ptr<Expression> collator_)
-    : Expression(Kind::Comparison, type::Boolean), op(std::move(op_)),
-      compare(getCollatorComparisonFunction(op)), lhs(std::move(lhs_)),
-      rhs(std::move(rhs_)), collator(std::move(collator_))
-{
-    assert(isComparableType(op, lhs->getType()) &&
-           isComparableType(op, rhs->getType()));
-    assert(lhs->getType() == rhs->getType() || lhs->getType() == type::Value ||
-           rhs->getType() == type::Value);
-
-    needsRuntimeTypeCheck =
-        (op == "==" || op == "!=") &&
-        (lhs->getType() == type::Value || rhs->getType() == type::Value);
-}
-
-EvaluationResult
-CollatorComparison::evaluate(const EvaluationContext &params) const
-{
-    EvaluationResult lhsResult = lhs->evaluate(params);
-    if (!lhsResult)
-        return lhsResult;
-
-    EvaluationResult rhsResult = rhs->evaluate(params);
-    if (!rhsResult)
-        return lhsResult;
-
-    if (needsRuntimeTypeCheck) {
-        if (typeOf(*lhsResult) != type::String ||
-            typeOf(*rhsResult) != type::String) {
-            return getBasicCompareFunction(op)(*lhsResult, *rhsResult);
-        }
-    }
-
-    auto collatorResult = collator->evaluate(params);
-    if (!collatorResult)
-        return collatorResult;
-
-    const Collator &c = collatorResult->get<Collator>();
-    return compare(lhsResult->get<std::string>(), rhsResult->get<std::string>(),
-                   c);
-}
-
-void CollatorComparison::eachChild(
-    const std::function<void(const Expression &)> &visit) const
-{
-    visit(*lhs);
-    visit(*rhs);
-    visit(*collator);
-}
-
-std::string CollatorComparison::getOperator() const { return op; }
-
-bool CollatorComparison::operator==(const Expression &e) const
-{
-    if (e.getKind() == Kind::Comparison) {
-        auto comp = static_cast<const CollatorComparison *>(&e);
-        return comp->op == op && *comp->collator == *collator &&
-               *comp->lhs == *lhs && *comp->rhs == *rhs;
-    }
-    return false;
-}
-
-std::vector<optional<Value>> CollatorComparison::possibleOutputs() const
-{
-    return {{true}, {false}};
-}
-
 using namespace mbgl::style::conversion;
 ParseResult parseComparison(const Convertible &value, ParsingContext &ctx)
 {
@@ -319,21 +205,6 @@ ParseResult parseComparison(const Convertible &value, ParsingContext &ctx)
             // (T, value)
             rhs = dsl::assertion(lhsType, std::move(*rhs));
         }
-    }
-
-    if (length == 4) {
-        if (lhsType != type::String && rhsType != type::String &&
-            lhsType != type::Value && rhsType != type::Value) {
-            ctx.error("Cannot use collator to compare non-string types.");
-            return ParseResult();
-        }
-        ParseResult collatorParseResult =
-            ctx.parse(arrayMember(value, 3), 3, {type::Collator});
-        if (!collatorParseResult)
-            return ParseResult();
-        return ParseResult(std::make_unique<CollatorComparison>(
-            op, std::move(*lhs), std::move(*rhs),
-            std::move(*collatorParseResult)));
     }
 
     return ParseResult(std::make_unique<BasicComparison>(op, std::move(*lhs),

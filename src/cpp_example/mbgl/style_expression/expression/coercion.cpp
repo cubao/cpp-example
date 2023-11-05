@@ -1,6 +1,5 @@
 #include "coercion.hpp"
 #include "check_subtype.hpp"
-#include "util.hpp"
 
 namespace mbgl
 {

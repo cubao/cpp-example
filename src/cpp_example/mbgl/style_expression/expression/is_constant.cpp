@@ -41,14 +41,6 @@ bool isFeatureConstant(const Expression &expression)
         return false;
     }
 
-    if (expression.getKind() == Kind::CollatorExpression) {
-        // Although the results of a Collator expression with fixed arguments
-        // generally shouldn't change between executions, we can't serialize
-        // them as constant expressions because results change based on
-        // environment.
-        return false;
-    }
-
     bool featureConstant = true;
     expression.eachChild([&](const Expression &e) {
         if (featureConstant && !isFeatureConstant(e)) {

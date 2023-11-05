@@ -849,15 +849,6 @@ const auto &concatCompoundExpression()
     return signature;
 }
 
-const auto &resolvedLocaleCompoundExpression()
-{
-    static auto signature = detail::makeSignature(
-        "resolved-locale", [](const Collator &collator) -> Result<std::string> {
-            return collator.resolvedLocale();
-        });
-    return signature;
-}
-
 const auto &errorCompoundExpression()
 {
     static auto signature = detail::makeSignature(
