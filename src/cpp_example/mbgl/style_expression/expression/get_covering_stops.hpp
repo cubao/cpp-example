@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../expression.hpp"
-#include <mbgl/util/range.hpp>
+#include "../range.hpp"
 #include <memory>
 #include <map>
 

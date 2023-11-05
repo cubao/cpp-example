@@ -5,14 +5,11 @@
 #include "dsl.hpp"
 #include "dsl_impl.hpp"
 #include "error.hpp"
-#include "format_expression.hpp"
-#include "image_expression.hpp"
 #include "interpolate.hpp"
 #include "literal.hpp"
 #include "step.hpp"
 
 #include <rapidjson/document.h>
-#include <mapbox/geojsonvt.hpp>
 #include <utility>
 
 namespace mbgl

@@ -2,9 +2,8 @@
 
 #include "../expression.hpp"
 #include "../parsing_context.hpp"
-#include <mbgl/style/conversion.hpp>
 
-#include <mbgl/util/range.hpp>
+#include "../range.hpp"
 
 #include <memory>
 #include <map>

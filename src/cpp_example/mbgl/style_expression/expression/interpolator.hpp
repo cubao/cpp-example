@@ -1,8 +1,7 @@
 #pragma once
 
-#include <mbgl/util/interpolate.hpp>
-#include <mbgl/util/range.hpp>
-#include <mbgl/util/unitbezier.hpp>
+#include "../range.hpp"
+#include "../unitbezier.hpp"
 
 namespace mbgl
 {
