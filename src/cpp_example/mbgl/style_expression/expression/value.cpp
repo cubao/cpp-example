@@ -1,7 +1,8 @@
+#define RAPIDJSON_HAS_STDSTRING
+
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
-#include <mbgl/style/expression/value.hpp>
-#include <mbgl/style/conversion/stringify.hpp>
+#include "value.hpp"
 
 namespace mbgl
 {
@@ -40,13 +41,9 @@ type::Type typeOf(const Value &value)
 
 std::string toString(const Value &value)
 {
-    return value.match(
-        [](const NullValue &) { return std::string(); },
-        [](const Color &c) { return c.stringify(); }, // avoid quoting
-        [](const Formatted &f) { return f.toString(); },
-        [](const Image &i) { return i.id(); },
-        [](const std::string &s) { return s; }, // avoid quoting
-        [](const auto &v_) { return stringify(v_); });
+    return value.match([](const NullValue &) { return std::string(); },
+                       [](const std::string &s) { return s; }, // avoid quoting
+                       [](const auto &v_) { return stringify(v_); });
 }
 
 void writeJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer,
@@ -226,31 +223,6 @@ ValueConverter<std::vector<T>>::fromExpressionValue(const Value &value)
         [&](const auto &) { return optional<std::vector<T>>(); });
 }
 
-Value ValueConverter<Position>::toExpressionValue(
-    const mbgl::style::Position &value)
-{
-    return ValueConverter<std::array<float, 3>>::toExpressionValue(
-        value.getSpherical());
-}
-
-optional<Position> ValueConverter<Position>::fromExpressionValue(const Value &v)
-{
-    auto pos = ValueConverter<std::array<float, 3>>::fromExpressionValue(v);
-    return pos ? optional<Position>(Position(*pos)) : optional<Position>();
-}
-
-Value ValueConverter<Rotation>::toExpressionValue(
-    const mbgl::style::Rotation &value)
-{
-    return ValueConverter<float>::toExpressionValue(value.getAngle());
-}
-
-optional<Rotation> ValueConverter<Rotation>::fromExpressionValue(const Value &v)
-{
-    auto angle = ValueConverter<float>::fromExpressionValue(v);
-    return angle ? optional<Rotation>(Rotation(*angle)) : optional<Rotation>();
-}
-
 template <typename T>
 Value ValueConverter<T, std::enable_if_t<std::is_enum<T>::value>>::
     toExpressionValue(const T &value)
@@ -311,15 +283,6 @@ template <> type::Type valueTypeToExpressionType<type::ErrorType>()
 template type::Type valueTypeToExpressionType<std::array<double, 4>>();
 template struct ValueConverter<std::array<double, 4>>;
 
-// for LocationIndicator position
-template type::Type valueTypeToExpressionType<std::array<double, 3>>();
-template struct ValueConverter<std::array<double, 3>>;
-
-// layout/paint property types
-template type::Type valueTypeToExpressionType<float>();
-template type::Type valueTypeToExpressionType<Position>();
-template type::Type valueTypeToExpressionType<Rotation>();
-
 template type::Type valueTypeToExpressionType<std::array<float, 2>>();
 template struct ValueConverter<std::array<float, 2>>;
 
@@ -331,57 +294,6 @@ template struct ValueConverter<std::vector<float>>;
 
 template type::Type valueTypeToExpressionType<std::vector<std::string>>();
 template struct ValueConverter<std::vector<std::string>>;
-
-template type::Type
-valueTypeToExpressionType<std::vector<TextVariableAnchorType>>();
-template struct ValueConverter<std::vector<TextVariableAnchorType>>;
-
-template type::Type valueTypeToExpressionType<AlignmentType>();
-template struct ValueConverter<AlignmentType>;
-
-template type::Type valueTypeToExpressionType<CirclePitchScaleType>();
-template struct ValueConverter<CirclePitchScaleType>;
-
-template type::Type valueTypeToExpressionType<IconTextFitType>();
-template struct ValueConverter<IconTextFitType>;
-
-template type::Type valueTypeToExpressionType<LineCapType>();
-template struct ValueConverter<LineCapType>;
-
-template type::Type valueTypeToExpressionType<LineJoinType>();
-template struct ValueConverter<LineJoinType>;
-
-template type::Type valueTypeToExpressionType<SymbolPlacementType>();
-template struct ValueConverter<SymbolPlacementType>;
-
-template type::Type valueTypeToExpressionType<SymbolZOrderType>();
-template struct ValueConverter<SymbolZOrderType>;
-
-template type::Type valueTypeToExpressionType<SymbolAnchorType>();
-template struct ValueConverter<SymbolAnchorType>;
-
-template type::Type valueTypeToExpressionType<TextJustifyType>();
-template struct ValueConverter<TextJustifyType>;
-
-template type::Type valueTypeToExpressionType<TextTransformType>();
-template struct ValueConverter<TextTransformType>;
-
-template type::Type valueTypeToExpressionType<TranslateAnchorType>();
-template struct ValueConverter<TranslateAnchorType>;
-
-template type::Type valueTypeToExpressionType<RasterResamplingType>();
-template struct ValueConverter<RasterResamplingType>;
-
-template type::Type
-valueTypeToExpressionType<HillshadeIlluminationAnchorType>();
-template struct ValueConverter<HillshadeIlluminationAnchorType>;
-
-template type::Type valueTypeToExpressionType<LightAnchorType>();
-template struct ValueConverter<LightAnchorType>;
-
-template type::Type
-valueTypeToExpressionType<std::vector<TextWritingModeType>>();
-template struct ValueConverter<std::vector<TextWritingModeType>>;
 
 } // namespace expression
 } // namespace style

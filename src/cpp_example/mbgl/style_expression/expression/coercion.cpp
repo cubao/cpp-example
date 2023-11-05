@@ -38,56 +38,6 @@ EvaluationResult toNumber(const Value &v)
     return *result;
 }
 
-EvaluationResult toColor(const Value &colorValue)
-{
-    return colorValue.match(
-        [&](const Color &color) -> EvaluationResult { return color; },
-        [&](const std::string &colorString) -> EvaluationResult {
-            const optional<Color> result = Color::parse(colorString);
-            if (result) {
-                return *result;
-            } else {
-                return EvaluationError{"Could not parse color from value '" +
-                                       colorString + "'"};
-            }
-        },
-        [&](const std::vector<Value> &components) -> EvaluationResult {
-            std::size_t len = components.size();
-            bool isNumeric = std::all_of(
-                components.begin(), components.end(),
-                [](const Value &item) { return item.template is<double>(); });
-            if ((len == 3 || len == 4) && isNumeric) {
-                Result<Color> c = {rgba(
-                    components[0].template get<double>(),
-                    components[1].template get<double>(),
-                    components[2].template get<double>(),
-                    len == 4 ? components[3].template get<double>() : 1.0)};
-                if (!c)
-                    return c.error();
-                return *c;
-            } else {
-                return EvaluationError{"Invalid rbga value " +
-                                       stringify(colorValue) +
-                                       ": expected an array containing either "
-                                       "three or four numeric values."};
-            }
-        },
-        [&](const auto &) -> EvaluationResult {
-            return EvaluationError{"Could not parse color from value '" +
-                                   stringify(colorValue) + "'"};
-        });
-}
-
-EvaluationResult toFormatted(const Value &formattedValue)
-{
-    return Formatted(toString(formattedValue).c_str());
-}
-
-EvaluationResult toImage(const Value &imageValue)
-{
-    return Image(toString(imageValue).c_str());
-}
-
 Coercion::Coercion(type::Type type_,
                    std::vector<std::unique_ptr<Expression>> inputs_)
     : Expression(Kind::Coercion, std::move(type_)), inputs(std::move(inputs_))
@@ -96,18 +46,12 @@ Coercion::Coercion(type::Type type_,
     type::Type t = getType();
     if (t.is<type::BooleanType>()) {
         coerceSingleValue = toBoolean;
-    } else if (t.is<type::ColorType>()) {
-        coerceSingleValue = toColor;
     } else if (t.is<type::NumberType>()) {
         coerceSingleValue = toNumber;
     } else if (t.is<type::StringType>()) {
         coerceSingleValue = [](const Value &v) -> EvaluationResult {
             return toString(v);
         };
-    } else if (t.is<type::FormattedType>()) {
-        coerceSingleValue = toFormatted;
-    } else if (t.is<type::ImageType>()) {
-        coerceSingleValue = toImage;
     } else {
         assert(false);
     }
@@ -135,7 +79,6 @@ std::string Coercion::getOperator() const
 {
     return getType().match(
         [](const type::BooleanType &) { return "to-boolean"; },
-        [](const type::ColorType &) { return "to-color"; },
         [](const type::NumberType &) { return "to-number"; },
         [](const type::StringType &) { return "to-string"; },
         [](const auto &) {
@@ -149,7 +92,6 @@ ParseResult Coercion::parse(const Convertible &value, ParsingContext &ctx)
 {
     static std::unordered_map<std::string, type::Type> types{
         {"to-boolean", type::Boolean},
-        {"to-color", type::Color},
         {"to-number", type::Number},
         {"to-string", type::String}};
 

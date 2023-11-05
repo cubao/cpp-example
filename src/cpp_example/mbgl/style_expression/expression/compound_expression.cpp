@@ -1,15 +1,6 @@
-#include <boost/algorithm/string/join.hpp>
-#include <mbgl/style/expression/collator.hpp>
-#include <mbgl/style/expression/compound_expression.hpp>
-#include <mbgl/style/expression/check_subtype.hpp>
-#include <mbgl/style/expression/util.hpp>
-#include <mbgl/tile/geometry_tile_data.hpp>
-#include <mbgl/math/log2.hpp>
-#include <mbgl/util/i18n.hpp>
-#include <mbgl/util/ignore.hpp>
-#include <mbgl/util/string.hpp>
-#include <mbgl/util/platform.hpp>
-#include <mbgl/util/variant.hpp>
+#include "expression/compound_expression.hpp"
+#include "check_subtype.hpp"
+#include "../variant.hpp"
 
 #include <mapbox/eternal.hpp>
 
@@ -22,6 +13,20 @@ namespace style
 {
 namespace expression
 {
+
+inline std::string str_join(const std::vector<std::string> &pieces,
+                            const std::string &sep)
+{
+    std::string s;
+    if (!pieces.empty()) {
+        s.append(pieces[0]);
+        for (size_t i = 1; i < pieces.size(); ++i) {
+            s.append(sep);
+            s.append(pieces[i]);
+        }
+    }
+    return s;
+}
 
 /*
     Represents the parameter list for an expression that takes an arbitrary
@@ -396,89 +401,6 @@ const auto &typeofCompoundExpression()
     static auto signature = detail::makeSignature(
         "typeof", [](const Value &v) -> Result<std::string> {
             return toString(typeOf(v));
-        });
-    return signature;
-}
-
-const auto &toRgbaCompoundExpression()
-{
-    static auto signature = detail::makeSignature(
-        "to-rgba", [](const Color &color) -> Result<std::array<double, 4>> {
-            return color.toArray();
-        });
-    return signature;
-}
-
-const auto &rgbaCompoundExpression()
-{
-    static auto signature = detail::makeSignature(
-        "rgba", [](double r, double g, double b, double a) {
-            return rgba(r, g, b, a);
-        });
-    return signature;
-}
-
-const auto &rgbCompoundExpression()
-{
-    static auto signature =
-        detail::makeSignature("rgb", [](double r, double g, double b) {
-            return rgba(r, g, b, 1.0f);
-        });
-    return signature;
-}
-
-const auto &zoomCompoundExpression()
-{
-    static auto signature = detail::makeSignature(
-        "zoom", [](const EvaluationContext &params) -> Result<double> {
-            if (!params.zoom) {
-                return EvaluationError{"The 'zoom' expression is unavailable "
-                                       "in the current evaluation context."};
-            }
-            return *(params.zoom);
-        });
-    return signature;
-}
-
-const auto &heatmapDensityCompoundExpression()
-{
-    static auto signature = detail::makeSignature(
-        "heatmap-density",
-        [](const EvaluationContext &params) -> Result<double> {
-            if (!params.colorRampParameter) {
-                return EvaluationError{
-                    "The 'heatmap-density' expression is unavailable in the "
-                    "current evaluation context."};
-            }
-            return *(params.colorRampParameter);
-        });
-    return signature;
-}
-
-const auto &lineProgressCompoundExpression()
-{
-    static auto signature = detail::makeSignature(
-        "line-progress", [](const EvaluationContext &params) -> Result<double> {
-            if (!params.colorRampParameter) {
-                return EvaluationError{
-                    "The 'line-progress' expression is unavailable in the "
-                    "current evaluation context."};
-            }
-            return *(params.colorRampParameter);
-        });
-    return signature;
-}
-
-const auto &accumulatedCompoundExpression()
-{
-    const static auto signature = detail::makeSignature(
-        "accumulated", [](const EvaluationContext &params) -> Result<Value> {
-            if (!params.accumulated) {
-                return EvaluationError{
-                    "The 'accumulated' expression is unavailable in the "
-                    "current evaluation context."};
-            }
-            return Value(toExpressionValue(*params.accumulated));
         });
     return signature;
 }
@@ -1174,13 +1096,6 @@ MAPBOX_ETERNAL_CONSTEXPR const auto compoundExpressionRegistry =
         {"pi", piCompoundExpression},
         {"ln2", ln2CompoundExpression},
         {"typeof", typeofCompoundExpression},
-        {"to-rgba", toRgbaCompoundExpression},
-        {"rgba", rgbaCompoundExpression},
-        {"rgb", rgbCompoundExpression},
-        {"zoom", zoomCompoundExpression},
-        {"heatmap-density", heatmapDensityCompoundExpression},
-        {"line-progress", lineProgressCompoundExpression},
-        {"accumulated", accumulatedCompoundExpression},
         {"has", hasContextCompoundExpression},
         {"has", hasObjectCompoundExpression},
         {"get", getContextCompoundExpression},
@@ -1283,9 +1198,9 @@ expectedTypesError(const Definitions &definitions,
                 }
             });
     }
-    std::string signatures =
-        overloads.empty() ? boost::algorithm::join(availableOverloads, " | ")
-                          : boost::algorithm::join(overloads, " | ");
+    std::string signatures = overloads.empty()
+                                 ? str_join(availableOverloads, " | ")
+                                 : str_join(overloads, " | ");
 
     std::string actualTypes;
     for (const auto &arg : args) {

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../type.hpp"
-#include <mbgl/util/enum.hpp>
-#include <mbgl/util/feature.hpp>
-#include <mbgl/util/variant.hpp>
+#include "../enum.hpp"
+#include "../feature.hpp"
+#include "../variant.hpp"
 
 #include <array>
 #include <vector>

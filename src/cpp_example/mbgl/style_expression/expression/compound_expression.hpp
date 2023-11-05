@@ -3,8 +3,7 @@
 #include "../expression.hpp"
 #include "../parsing_context.hpp"
 #include "../type.hpp"
-#include <mbgl/style/expression/value.hpp>
-#include <mbgl/style/conversion.hpp>
+#include "value.hpp"
 #include "../optional.hpp"
 
 #include <memory>

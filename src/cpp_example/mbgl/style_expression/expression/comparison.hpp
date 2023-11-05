@@ -1,9 +1,7 @@
 #pragma once
 
-#include <mbgl/style/expression/collator_expression.hpp>
 #include "../expression.hpp"
 #include "../parsing_context.hpp"
-#include <mbgl/style/conversion.hpp>
 
 #include <memory>
 

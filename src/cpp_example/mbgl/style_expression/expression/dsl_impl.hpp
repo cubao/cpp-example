@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../expression.hpp"
-#include <mbgl/util/color.hpp>
 
 namespace mbgl
 {

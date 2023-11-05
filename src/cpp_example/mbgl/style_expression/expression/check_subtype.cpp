@@ -44,9 +44,8 @@ optional<std::string> checkSubtype(const Type &expected, const Type &t)
             if (t.is<ValueType>())
                 return {};
 
-            const Type members[] = {Null,      Boolean, Number,
-                                    String,    Object,  Color,
-                                    Formatted, Image,   Array(Value)};
+            const Type members[] = {Null,   Boolean, Number,
+                                    String, Object,  Array(Value)};
 
             for (const auto &member : members) {
                 const auto err = checkSubtype(member, t);
