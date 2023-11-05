@@ -1,9 +1,12 @@
 #include <mbgl/i18n/number_format.hpp>
 #include <mbgl/style/expression/number_format.hpp>
 
-namespace mbgl {
-namespace style {
-namespace expression {
+namespace mbgl
+{
+namespace style
+{
+namespace expression
+{
 
 const char localeKey[] = "locale";
 const char currencyKey[] = "currency";
@@ -15,23 +18,23 @@ NumberFormat::NumberFormat(std::unique_ptr<Expression> number_,
                            std::unique_ptr<Expression> currency_,
                            std::unique_ptr<Expression> minFractionDigits_,
                            std::unique_ptr<Expression> maxFractionDigits_)
-    : Expression(Kind::NumberFormat, type::String),
-      number(std::move(number_)),
-      locale(std::move(locale_)),
-      currency(std::move(currency_)),
+    : Expression(Kind::NumberFormat, type::String), number(std::move(number_)),
+      locale(std::move(locale_)), currency(std::move(currency_)),
       minFractionDigits(std::move(minFractionDigits_)),
       maxFractionDigits(std::move(maxFractionDigits_))
-{}
+{
+}
 
 NumberFormat::~NumberFormat() = default;
 
-EvaluationResult NumberFormat::evaluate(const EvaluationContext& params) const {
+EvaluationResult NumberFormat::evaluate(const EvaluationContext &params) const
+{
     auto numberResult = number->evaluate(params);
     if (!numberResult) {
         return numberResult.error();
     }
     double evaluatedNumber = numberResult->get<double>();
-    
+
     std::string evaluatedLocale;
     if (locale) {
         auto localeResult = locale->evaluate(params);
@@ -69,25 +72,30 @@ EvaluationResult NumberFormat::evaluate(const EvaluationContext& params) const {
     }
 
     std::string output;
-    output = platform::formatNumber(evaluatedNumber,
-                                    evaluatedLocale,
-                                    evaluatedCurrency,
-                                    evaluatedMinFractionDigits,
-                                    evaluatedMaxFractionDigits);
+    output = platform::formatNumber(
+        evaluatedNumber, evaluatedLocale, evaluatedCurrency,
+        evaluatedMinFractionDigits, evaluatedMaxFractionDigits);
     return output;
 }
 
-void NumberFormat::eachChild(const std::function<void(const Expression&)>& visit) const {
+void NumberFormat::eachChild(
+    const std::function<void(const Expression &)> &visit) const
+{
     visit(*number);
-    if (locale) visit(*locale);
-    if (currency) visit(*currency);
-    if (minFractionDigits) visit(*minFractionDigits);
-    if (maxFractionDigits) visit(*maxFractionDigits);
+    if (locale)
+        visit(*locale);
+    if (currency)
+        visit(*currency);
+    if (minFractionDigits)
+        visit(*minFractionDigits);
+    if (maxFractionDigits)
+        visit(*maxFractionDigits);
 }
 
-bool NumberFormat::operator==(const Expression& e) const {
+bool NumberFormat::operator==(const Expression &e) const
+{
     if (e.getKind() == Kind::NumberFormat) {
-        auto rhs = static_cast<const NumberFormat*>(&e);
+        auto rhs = static_cast<const NumberFormat *>(&e);
         if ((locale && (!rhs->locale || *locale != *rhs->locale)) ||
             (!locale && rhs->locale)) {
             return false;
@@ -96,11 +104,15 @@ bool NumberFormat::operator==(const Expression& e) const {
             (!currency && rhs->currency)) {
             return false;
         }
-        if ((minFractionDigits && (!rhs->minFractionDigits || *minFractionDigits != *rhs->minFractionDigits)) ||
+        if ((minFractionDigits &&
+             (!rhs->minFractionDigits ||
+              *minFractionDigits != *rhs->minFractionDigits)) ||
             (!minFractionDigits && rhs->minFractionDigits)) {
             return false;
         }
-        if ((maxFractionDigits && (!rhs->maxFractionDigits || *maxFractionDigits != *rhs->maxFractionDigits)) ||
+        if ((maxFractionDigits &&
+             (!rhs->maxFractionDigits ||
+              *maxFractionDigits != *rhs->maxFractionDigits)) ||
             (!maxFractionDigits && rhs->maxFractionDigits)) {
             return false;
         }
@@ -109,20 +121,24 @@ bool NumberFormat::operator==(const Expression& e) const {
     return false;
 }
 
-std::vector<optional<Value>> NumberFormat::possibleOutputs() const {
-    return { nullopt };
+std::vector<optional<Value>> NumberFormat::possibleOutputs() const
+{
+    return {nullopt};
 }
 
 using namespace mbgl::style::conversion;
-ParseResult NumberFormat::parse(const Convertible& value, ParsingContext& ctx) {
+ParseResult NumberFormat::parse(const Convertible &value, ParsingContext &ctx)
+{
     std::size_t length = arrayLength(value);
 
     if (length != 3) {
-        ctx.error("Expected two arguments, but found " + util::toString(length) + " instead.");
+        ctx.error("Expected two arguments, but found " +
+                  util::toString(length) + " instead.");
         return ParseResult();
     }
 
-    ParseResult numberResult = ctx.parse(arrayMember(value, 1), 1, {type::Number});
+    ParseResult numberResult =
+        ctx.parse(arrayMember(value, 1), 1, {type::Number});
     if (!numberResult) {
         ctx.error("Failed to parse the number.");
         return ParseResult();
@@ -130,7 +146,8 @@ ParseResult NumberFormat::parse(const Convertible& value, ParsingContext& ctx) {
 
     type::Type type = (*numberResult)->getType();
     if (!type.is<type::NumberType>()) {
-        ctx.error("Expected argument of type number, but found " + toString(type) + " instead.");
+        ctx.error("Expected argument of type number, but found " +
+                  toString(type) + " instead.");
         return ParseResult();
     }
 
@@ -150,7 +167,8 @@ ParseResult NumberFormat::parse(const Convertible& value, ParsingContext& ctx) {
         }
     }
 
-    const optional<Convertible> currencyOption = objectMember(options, currencyKey);
+    const optional<Convertible> currencyOption =
+        objectMember(options, currencyKey);
     ParseResult currencyResult;
     if (currencyOption) {
         currencyResult = ctx.parse(*currencyOption, 1, {type::String});
@@ -160,35 +178,42 @@ ParseResult NumberFormat::parse(const Convertible& value, ParsingContext& ctx) {
         }
     }
 
-    const optional<Convertible> minFractionDigitsOption = objectMember(options, minFractionDigitsKey);
+    const optional<Convertible> minFractionDigitsOption =
+        objectMember(options, minFractionDigitsKey);
     ParseResult minFractionDigitsResult;
     if (minFractionDigitsOption) {
-        minFractionDigitsResult = ctx.parse(*minFractionDigitsOption, 1, {type::Number});
+        minFractionDigitsResult =
+            ctx.parse(*minFractionDigitsOption, 1, {type::Number});
         if (!minFractionDigitsResult) {
             ctx.error("Number-format min-fraction-digits parsing failed.");
             return ParseResult();
         }
     }
 
-    const optional<Convertible> maxFractionDigitsOption = objectMember(options, maxFractionDigitsKey);
+    const optional<Convertible> maxFractionDigitsOption =
+        objectMember(options, maxFractionDigitsKey);
     ParseResult maxFractionDigitsResult;
     if (maxFractionDigitsOption) {
-        maxFractionDigitsResult = ctx.parse(*maxFractionDigitsOption, 1, {type::Number});
+        maxFractionDigitsResult =
+            ctx.parse(*maxFractionDigitsOption, 1, {type::Number});
         if (!maxFractionDigitsResult) {
             ctx.error("Number-format max-fraction-digits parsing failed.");
             return ParseResult();
         }
     }
 
-    return ParseResult(std::make_unique<NumberFormat>(std::move(*numberResult),
-                                                      localeResult ? std::move(*localeResult) : nullptr,
-                                                      currencyResult? std::move(*currencyResult) : nullptr,
-                                                      minFractionDigitsResult ? std::move(*minFractionDigitsResult) : nullptr,
-                                                      maxFractionDigitsResult ? std::move(*maxFractionDigitsResult) : nullptr));
+    return ParseResult(std::make_unique<NumberFormat>(
+        std::move(*numberResult),
+        localeResult ? std::move(*localeResult) : nullptr,
+        currencyResult ? std::move(*currencyResult) : nullptr,
+        minFractionDigitsResult ? std::move(*minFractionDigitsResult) : nullptr,
+        maxFractionDigitsResult ? std::move(*maxFractionDigitsResult)
+                                : nullptr));
 }
 
-mbgl::Value NumberFormat::serialize() const {
-    std::vector<mbgl::Value> serialized{{ getOperator() }};
+mbgl::Value NumberFormat::serialize() const
+{
+    std::vector<mbgl::Value> serialized{{getOperator()}};
     serialized.emplace_back(number->serialize());
 
     std::unordered_map<std::string, mbgl::Value> options;

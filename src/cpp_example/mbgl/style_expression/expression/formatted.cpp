@@ -1,23 +1,29 @@
 #include <mbgl/style/expression/formatted.hpp>
 #include <mbgl/style/conversion/constant.hpp>
 
-namespace mbgl {
-namespace style {
-namespace expression {
+namespace mbgl
+{
+namespace style
+{
+namespace expression
+{
 
-const char* const kFormattedSectionFontScale = "font-scale";
-const char* const kFormattedSectionTextFont = "text-font";
-const char* const kFormattedSectionTextColor = "text-color";
+const char *const kFormattedSectionFontScale = "font-scale";
+const char *const kFormattedSectionTextFont = "text-font";
+const char *const kFormattedSectionTextColor = "text-color";
 
-bool Formatted::operator==(const Formatted& other) const {
+bool Formatted::operator==(const Formatted &other) const
+{
     if (other.sections.size() != sections.size()) {
         return false;
     }
     for (std::size_t i = 0; i < sections.size(); i++) {
-        const auto& thisSection = sections.at(i);
-        const auto& otherSection = other.sections.at(i);
-        if (thisSection.text != otherSection.text || thisSection.image != otherSection.image ||
-            thisSection.fontScale != otherSection.fontScale || thisSection.fontStack != otherSection.fontStack ||
+        const auto &thisSection = sections.at(i);
+        const auto &otherSection = other.sections.at(i);
+        if (thisSection.text != otherSection.text ||
+            thisSection.image != otherSection.image ||
+            thisSection.fontScale != otherSection.fontScale ||
+            thisSection.fontStack != otherSection.fontStack ||
             thisSection.textColor != otherSection.textColor) {
             return false;
         }
@@ -25,29 +31,34 @@ bool Formatted::operator==(const Formatted& other) const {
     return true;
 }
 
-std::string Formatted::toString() const {
+std::string Formatted::toString() const
+{
     std::string result;
-    for (const auto& section : sections) {
+    for (const auto &section : sections) {
         result += section.text;
     }
     return result;
 }
 
-bool Formatted::empty() const {
+bool Formatted::empty() const
+{
     if (sections.empty()) {
         return true;
     }
 
-    return !std::any_of(sections.begin(), sections.end(), [](const FormattedSection& section) {
-        return !section.text.empty() || (section.image && !section.image->empty());
-    });
+    return !std::any_of(sections.begin(), sections.end(),
+                        [](const FormattedSection &section) {
+                            return !section.text.empty() ||
+                                   (section.image && !section.image->empty());
+                        });
 }
 
-mbgl::Value Formatted::toObject() const {
+mbgl::Value Formatted::toObject() const
+{
     mapbox::base::ValueObject result;
     mapbox::base::ValueArray sectionValues;
     sectionValues.reserve(sections.size());
-    for (const auto& section : sections) {
+    for (const auto &section : sections) {
         mapbox::base::ValueObject serializedSection;
         serializedSection.emplace("text", section.text);
         if (section.fontScale) {
@@ -57,16 +68,19 @@ mbgl::Value Formatted::toObject() const {
         }
         if (section.fontStack) {
             std::string fontStackString;
-            serializedSection.emplace("fontStack", fontStackToString(*section.fontStack));
+            serializedSection.emplace("fontStack",
+                                      fontStackToString(*section.fontStack));
         } else {
             serializedSection.emplace("fontStack", NullValue());
         }
         if (section.textColor) {
-            serializedSection.emplace("textColor", section.textColor->toObject());
+            serializedSection.emplace("textColor",
+                                      section.textColor->toObject());
         } else {
             serializedSection.emplace("textColor", NullValue());
         }
-        serializedSection.emplace("image", section.image ? section.image->toValue() : NullValue());
+        serializedSection.emplace(
+            "image", section.image ? section.image->toValue() : NullValue());
         sectionValues.emplace_back(serializedSection);
     }
     result.emplace("sections", std::move(sectionValues));
@@ -75,39 +89,47 @@ mbgl::Value Formatted::toObject() const {
 
 } // namespace expression
 
-namespace conversion {
-    
+namespace conversion
+{
+
 using namespace mbgl::style::expression;
 
-optional<Formatted> Converter<Formatted>::operator()(const Convertible& value, Error& error) const {
+optional<Formatted> Converter<Formatted>::operator()(const Convertible &value,
+                                                     Error &error) const
+{
     using namespace mbgl::style::expression;
 
     if (isArray(value)) {
         std::vector<FormattedSection> sections;
         for (std::size_t i = 0; i < arrayLength(value); ++i) {
-            const Convertible& section = arrayMember(value, i);
+            const Convertible &section = arrayMember(value, i);
             std::size_t sectionLength = arrayLength(section);
             if (sectionLength < 1) {
-                error.message = "Section has to contain a text and optional parameters or an image.";
+                error.message = "Section has to contain a text and optional "
+                                "parameters or an image.";
                 return nullopt;
             }
 
-            const Convertible& firstElement = arrayMember(section, 0);
+            const Convertible &firstElement = arrayMember(section, 0);
             if (isArray(firstElement)) {
                 if (arrayLength(firstElement) < 2) {
                     error.message = "Image section has to contain image name.";
                     return nullopt;
                 }
 
-                optional<std::string> imageOp = toString(arrayMember(firstElement, 0));
+                optional<std::string> imageOp =
+                    toString(arrayMember(firstElement, 0));
                 if (!imageOp || *imageOp != "image") {
-                    error.message = "Serialized image section has to contain 'image' operator.";
+                    error.message = "Serialized image section has to contain "
+                                    "'image' operator.";
                     return nullopt;
                 }
 
-                optional<std::string> imageArg = toString(arrayMember(firstElement, 1));
+                optional<std::string> imageArg =
+                    toString(arrayMember(firstElement, 1));
                 if (!imageArg) {
-                    error.message = "Serialized image section agument has to be of a String type.";
+                    error.message = "Serialized image section agument has to "
+                                    "be of a String type.";
                     return nullopt;
                 }
 
@@ -125,23 +147,28 @@ optional<Formatted> Converter<Formatted>::operator()(const Convertible& value, E
             optional<FontStack> textFont;
             optional<Color> textColor;
             if (sectionLength > 1) {
-                const Convertible& sectionParams = arrayMember(section, 1);
+                const Convertible &sectionParams = arrayMember(section, 1);
                 if (!isObject(sectionParams)) {
-                    error.message = "Parameters have to be enclosed in an object.";
+                    error.message =
+                        "Parameters have to be enclosed in an object.";
                     return nullopt;
                 }
 
-                optional<Convertible> fontScaleMember = objectMember(sectionParams, kFormattedSectionFontScale);
+                optional<Convertible> fontScaleMember =
+                    objectMember(sectionParams, kFormattedSectionFontScale);
                 if (fontScaleMember) {
                     fontScale = toDouble(*fontScaleMember);
                 }
 
-                optional<Convertible> textFontMember = objectMember(sectionParams, kFormattedSectionTextFont);
+                optional<Convertible> textFontMember =
+                    objectMember(sectionParams, kFormattedSectionTextFont);
                 if (textFontMember) {
                     if (isArray(*textFontMember)) {
                         std::vector<std::string> fontsVector;
-                        for (std::size_t j = 0; j < arrayLength(*textFontMember); ++j) {
-                            auto font = toString(arrayMember(*textFontMember, j));
+                        for (std::size_t j = 0;
+                             j < arrayLength(*textFontMember); ++j) {
+                            auto font =
+                                toString(arrayMember(*textFontMember, j));
                             if (font) {
                                 fontsVector.push_back(*font);
                             } else {
@@ -156,7 +183,8 @@ optional<Formatted> Converter<Formatted>::operator()(const Convertible& value, E
                     }
                 }
 
-                optional<Convertible> textColorMember = objectMember(sectionParams, kFormattedSectionTextColor);
+                optional<Convertible> textColorMember =
+                    objectMember(sectionParams, kFormattedSectionTextColor);
                 if (textColorMember) {
                     textColor = convert<Color>(*textColorMember, error);
                     if (!textColor) {
@@ -179,4 +207,3 @@ optional<Formatted> Converter<Formatted>::operator()(const Convertible& value, E
 } // namespace conversion
 } // namespace style
 } // namespace mbgl
-

@@ -5,78 +5,92 @@
 #include <mbgl/util/variant.hpp>
 #include <vector>
 
-namespace mbgl {
-namespace style {
-namespace expression {
-namespace type {
+namespace mbgl
+{
+namespace style
+{
+namespace expression
+{
+namespace type
+{
 
-template <class T>
-std::string toString(const T& t);
+template <class T> std::string toString(const T &t);
 
-struct NullType {
+struct NullType
+{
     constexpr NullType() = default;
     std::string getName() const { return "null"; }
-    bool operator==(const NullType&) const { return true; }
+    bool operator==(const NullType &) const { return true; }
 };
 
-struct NumberType {
+struct NumberType
+{
     constexpr NumberType() = default;
     std::string getName() const { return "number"; }
-    bool operator==(const NumberType&) const { return true; }
+    bool operator==(const NumberType &) const { return true; }
 };
 
-struct BooleanType {
+struct BooleanType
+{
     constexpr BooleanType() = default;
     std::string getName() const { return "boolean"; }
-    bool operator==(const BooleanType&) const { return true; }
+    bool operator==(const BooleanType &) const { return true; }
 };
 
-struct StringType {
+struct StringType
+{
     constexpr StringType() = default;
     std::string getName() const { return "string"; }
-    bool operator==(const StringType&) const { return true; }
+    bool operator==(const StringType &) const { return true; }
 };
 
-struct ColorType {
+struct ColorType
+{
     constexpr ColorType() = default;
     std::string getName() const { return "color"; }
-    bool operator==(const ColorType&) const { return true; }
+    bool operator==(const ColorType &) const { return true; }
 };
 
-struct ObjectType {
+struct ObjectType
+{
     constexpr ObjectType() = default;
     std::string getName() const { return "object"; }
-    bool operator==(const ObjectType&) const { return true; }
+    bool operator==(const ObjectType &) const { return true; }
 };
 
-struct ErrorType {
+struct ErrorType
+{
     constexpr ErrorType() = default;
     std::string getName() const { return "error"; }
-    bool operator==(const ErrorType&) const { return true; }
+    bool operator==(const ErrorType &) const { return true; }
 };
 
-struct ValueType {
+struct ValueType
+{
     constexpr ValueType() = default;
     std::string getName() const { return "value"; }
-    bool operator==(const ValueType&) const { return true; }
-};
-    
-struct CollatorType {
-    constexpr CollatorType() = default;
-    std::string getName() const { return "collator"; }
-    bool operator==(const CollatorType&) const { return true; }
-};
-    
-struct FormattedType {
-    constexpr FormattedType() = default;
-    std::string getName() const { return "formatted"; }
-    bool operator==(const FormattedType&) const { return true; }
+    bool operator==(const ValueType &) const { return true; }
 };
 
-struct ImageType {
+struct CollatorType
+{
+    constexpr CollatorType() = default;
+    std::string getName() const { return "collator"; }
+    bool operator==(const CollatorType &) const { return true; }
+};
+
+struct FormattedType
+{
+    constexpr FormattedType() = default;
+    std::string getName() const { return "formatted"; }
+    bool operator==(const FormattedType &) const { return true; }
+};
+
+struct ImageType
+{
     constexpr ImageType() = default;
     std::string getName() const { return "resolvedImage"; }
-    bool operator==(const ImageType&) const { return true; }
+    bool operator==(const ImageType &) const { return true; }
 };
 
 constexpr NullType Null;
@@ -93,26 +107,27 @@ constexpr ImageType Image;
 
 struct Array;
 
-using Type = variant<NullType,
-                     NumberType,
-                     BooleanType,
-                     StringType,
-                     ColorType,
-                     ObjectType,
-                     ValueType,
-                     mapbox::util::recursive_wrapper<Array>,
-                     CollatorType,
-                     FormattedType,
-                     ErrorType,
-                     ImageType>;
+using Type =
+    variant<NullType, NumberType, BooleanType, StringType, ColorType,
+            ObjectType, ValueType, mapbox::util::recursive_wrapper<Array>,
+            CollatorType, FormattedType, ErrorType, ImageType>;
 
-struct Array {
+struct Array
+{
     explicit Array(Type itemType_) : itemType(std::move(itemType_)) {}
-    Array(Type itemType_, std::size_t N_) : itemType(std::move(itemType_)), N(N_) {}
-    Array(Type itemType_, optional<std::size_t> N_) : itemType(std::move(itemType_)), N(std::move(N_)) {}
-    std::string getName() const {
+    Array(Type itemType_, std::size_t N_)
+        : itemType(std::move(itemType_)), N(N_)
+    {
+    }
+    Array(Type itemType_, optional<std::size_t> N_)
+        : itemType(std::move(itemType_)), N(std::move(N_))
+    {
+    }
+    std::string getName() const
+    {
         if (N) {
-            return "array<" + toString(itemType) + ", " + util::toString(*N) + ">";
+            return "array<" + toString(itemType) + ", " + util::toString(*N) +
+                   ">";
         } else if (itemType == Value) {
             return "array";
         } else {
@@ -120,14 +135,19 @@ struct Array {
         }
     }
 
-    bool operator==(const Array& rhs) const { return itemType == rhs.itemType && N == rhs.N; }
-    
+    bool operator==(const Array &rhs) const
+    {
+        return itemType == rhs.itemType && N == rhs.N;
+    }
+
     Type itemType;
     optional<std::size_t> N;
 };
-    
-template <class T>
-std::string toString(const T& type) { return type.match([&] (const auto& t) { return t.getName(); }); }
+
+template <class T> std::string toString(const T &type)
+{
+    return type.match([&](const auto &t) { return t.getName(); });
+}
 
 } // namespace type
 } // namespace expression

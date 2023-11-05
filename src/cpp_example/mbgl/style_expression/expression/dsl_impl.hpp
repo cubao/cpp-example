@@ -3,15 +3,21 @@
 #include "../expression.hpp"
 #include <mbgl/util/color.hpp>
 
-namespace mbgl {
-namespace style {
-namespace expression {
-namespace dsl {
+namespace mbgl
+{
+namespace style
+{
+namespace expression
+{
+namespace dsl
+{
 
-std::unique_ptr<Expression> compound(const char* op, std::vector<std::unique_ptr<Expression>> args);
+std::unique_ptr<Expression>
+compound(const char *op, std::vector<std::unique_ptr<Expression>> args);
 
 template <class... Args>
-std::unique_ptr<Expression> compound(const char* op, Args&&... args) {
+std::unique_ptr<Expression> compound(const char *op, Args &&...args)
+{
     return compound(op, vec(std::forward<Args>(args)...));
 }
 

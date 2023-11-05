@@ -2,11 +2,14 @@
 
 #include "../expression.hpp"
 
-namespace mbgl {
-namespace style {
-namespace expression {
+namespace mbgl
+{
+namespace style
+{
+namespace expression
+{
 
-bool isExpression(const conversion::Convertible& value);
+bool isExpression(const conversion::Convertible &value);
 
 } // namespace expression
 } // namespace style

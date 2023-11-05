@@ -3,9 +3,12 @@
 #include "../expression.hpp"
 #include <mbgl/util/color.hpp>
 
-namespace mbgl {
-namespace style {
-namespace expression {
+namespace mbgl
+{
+namespace style
+{
+namespace expression
+{
 
 Result<Color> rgba(double r, double g, double b, double a);
 

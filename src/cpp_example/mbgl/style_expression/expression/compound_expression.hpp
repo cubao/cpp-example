@@ -10,11 +10,15 @@
 #include <memory>
 #include <vector>
 
-namespace mbgl {
-namespace style {
-namespace expression {
+namespace mbgl
+{
+namespace style
+{
+namespace expression
+{
 
-namespace detail {
+namespace detail
+{
 struct SignatureBase;
 } // namespace detail
 
@@ -27,32 +31,38 @@ struct SignatureBase;
     The majority of expressions specified in the style-spec are implemented in
     this fashion (see compound_expression.cpp).
 */
-class CompoundExpression : public Expression {
-public:
-    CompoundExpression(const detail::SignatureBase&, std::vector<std::unique_ptr<Expression>>);
+class CompoundExpression : public Expression
+{
+  public:
+    CompoundExpression(const detail::SignatureBase &,
+                       std::vector<std::unique_ptr<Expression>>);
 
     std::string getOperator() const override;
-    EvaluationResult evaluate(const EvaluationContext& evaluationParams) const override;
+    EvaluationResult
+    evaluate(const EvaluationContext &evaluationParams) const override;
     std::vector<optional<Value>> possibleOutputs() const override;
-    void eachChild(const std::function<void(const Expression&)>& visit) const override;
-    bool operator==(const Expression& e) const override;
+    void eachChild(
+        const std::function<void(const Expression &)> &visit) const override;
+    bool operator==(const Expression &e) const override;
 
     optional<std::size_t> getParameterCount() const;
 
-    static bool exists(const std::string& name);
+    static bool exists(const std::string &name);
 
-protected:
-    const detail::SignatureBase& signature;
+  protected:
+    const detail::SignatureBase &signature;
     std::vector<std::unique_ptr<Expression>> args;
 };
 
-ParseResult parseCompoundExpression(const std::string& name,
-                                    const mbgl::style::conversion::Convertible& value,
-                                    ParsingContext& ctx);
+ParseResult
+parseCompoundExpression(const std::string &name,
+                        const mbgl::style::conversion::Convertible &value,
+                        ParsingContext &ctx);
 
-ParseResult createCompoundExpression(const std::string& name,
-                                     std::vector<std::unique_ptr<Expression>> args,
-                                     ParsingContext& ctx);
+ParseResult
+createCompoundExpression(const std::string &name,
+                         std::vector<std::unique_ptr<Expression>> args,
+                         ParsingContext &ctx);
 
 } // namespace expression
 } // namespace style

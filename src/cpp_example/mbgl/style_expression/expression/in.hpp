@@ -4,26 +4,33 @@
 #include "../expression.hpp"
 #include <memory>
 
-namespace mbgl {
-namespace style {
-namespace expression {
+namespace mbgl
+{
+namespace style
+{
+namespace expression
+{
 
-class In final : public Expression {
-public:
-    In(std::unique_ptr<Expression> needle_, std::unique_ptr<Expression> haystack_);
+class In final : public Expression
+{
+  public:
+    In(std::unique_ptr<Expression> needle_,
+       std::unique_ptr<Expression> haystack_);
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible& value, ParsingContext& ctx);
+    static ParseResult parse(const mbgl::style::conversion::Convertible &value,
+                             ParsingContext &ctx);
 
-    EvaluationResult evaluate(const EvaluationContext& params) const override;
-    void eachChild(const std::function<void(const Expression&)>&) const override;
+    EvaluationResult evaluate(const EvaluationContext &params) const override;
+    void
+    eachChild(const std::function<void(const Expression &)> &) const override;
 
-    bool operator==(const Expression& e) const override;
+    bool operator==(const Expression &e) const override;
 
     std::vector<optional<Value>> possibleOutputs() const override;
 
     std::string getOperator() const override;
 
-private:
+  private:
     std::unique_ptr<Expression> needle;
     std::unique_ptr<Expression> haystack;
 };

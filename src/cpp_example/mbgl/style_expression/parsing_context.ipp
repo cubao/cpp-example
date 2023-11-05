@@ -22,7 +22,7 @@
 // #include <mbgl/style/expression/number_format.hpp>
 // #include <mbgl/style/expression/step.hpp>
 // #include <mbgl/style/expression/dsl.hpp>
-// 
+//
 #include <mapbox/eternal.hpp>
 #include <utility>
 

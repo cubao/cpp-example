@@ -113,15 +113,14 @@ class ParsingContext
     /*
         Parse the given style-spec JSON value as an expression.
     */
-    ParseResult
-    parseExpression(const JSValue &value,
-                    const optional<TypeAnnotationOption> & = {});
+    ParseResult parseExpression(const JSValue &value,
+                                const optional<TypeAnnotationOption> & = {});
 
     /*
         Parse a child expression. For use by individual Expression::parse()
        methods.
     */
-    ParseResult parse(const JSValue&, std::size_t, optional<type::Type> = {},
+    ParseResult parse(const JSValue &, std::size_t, optional<type::Type> = {},
                       const optional<TypeAnnotationOption> & = {});
 
     /*
@@ -129,8 +128,7 @@ class ParsingContext
        methods.
     */
     ParseResult
-    parse(const JSValue &, std::size_t index,
-          optional<type::Type>,
+    parse(const JSValue &, std::size_t index, optional<type::Type>,
           const std::map<std::string, std::shared_ptr<Expression>> &);
 
     /*
