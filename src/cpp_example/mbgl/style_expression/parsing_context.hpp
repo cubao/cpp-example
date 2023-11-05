@@ -2,6 +2,7 @@
 
 #include "optional.hpp"
 #include "type.hpp"
+#include "rapidjson.hpp"
 
 #include <iterator>
 #include <map>
@@ -113,23 +114,14 @@ class ParsingContext
         Parse the given style-spec JSON value as an expression.
     */
     ParseResult
-    parseExpression(const mbgl::style::conversion::Convertible &value,
+    parseExpression(const JSValue &value,
                     const optional<TypeAnnotationOption> & = {});
-
-    /*
-        Parse the given style-spec JSON value as an expression intended to be
-       used in a layout or paint property.  This entails checking additional
-       constraints that exist in that context but not, e.g., for filters.
-    */
-    ParseResult parseLayerPropertyExpression(
-        const mbgl::style::conversion::Convertible &value);
 
     /*
         Parse a child expression. For use by individual Expression::parse()
        methods.
     */
-    ParseResult parse(const mbgl::style::conversion::Convertible &, std::size_t,
-                      optional<type::Type> = {},
+    ParseResult parse(const JSValue&, std::size_t, optional<type::Type> = {},
                       const optional<TypeAnnotationOption> & = {});
 
     /*
@@ -137,7 +129,7 @@ class ParsingContext
        methods.
     */
     ParseResult
-    parse(const mbgl::style::conversion::Convertible &, std::size_t index,
+    parse(const JSValue &, std::size_t index,
           optional<type::Type>,
           const std::map<std::string, std::shared_ptr<Expression>> &);
 
@@ -199,7 +191,7 @@ class ParsingContext
        dispatching to the appropriate ParseXxxx::parse(const V&, ParsingContext)
        method.
     */
-    ParseResult parse(const mbgl::style::conversion::Convertible &value,
+    ParseResult parse(const JSValue &value,
                       const optional<TypeAnnotationOption> & = {});
 
     std::string key;

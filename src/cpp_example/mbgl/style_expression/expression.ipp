@@ -1,5 +1,5 @@
 #include <mbgl/style/expression/compound_expression.hpp>
-#include <mbgl/style/expression/expression.hpp>
+#include "../expression.hpp"
 #include <utility>
 
 namespace mbgl
