@@ -1,9 +1,7 @@
 #pragma once
 
-#include <mbgl/util/optional.hpp>
-#include <mbgl/util/string.hpp>
-#include <mbgl/style/expression/type.hpp>
-#include <mbgl/style/conversion.hpp>
+#include "optional.hpp"
+#include "type.hpp"
 
 #include <iterator>
 #include <map>
