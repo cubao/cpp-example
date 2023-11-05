@@ -1,8 +1,7 @@
 #pragma once
 
-#include <mapbox/style_expression/optional.hpp>
-#include <mbgl/util/string.hpp>
-#include <mbgl/util/variant.hpp>
+#include <mbgl/style_expression/optional.hpp>
+#include <mbgl/style_expression/variant.hpp>
 #include <vector>
 
 namespace mbgl {
@@ -37,12 +36,6 @@ struct StringType {
     bool operator==(const StringType&) const { return true; }
 };
 
-struct ColorType {
-    constexpr ColorType() = default;
-    std::string getName() const { return "color"; }
-    bool operator==(const ColorType&) const { return true; }
-};
-
 struct ObjectType {
     constexpr ObjectType() = default;
     std::string getName() const { return "object"; }
@@ -73,23 +66,15 @@ struct FormattedType {
     bool operator==(const FormattedType&) const { return true; }
 };
 
-struct ImageType {
-    constexpr ImageType() = default;
-    std::string getName() const { return "resolvedImage"; }
-    bool operator==(const ImageType&) const { return true; }
-};
-
 constexpr NullType Null;
 constexpr NumberType Number;
 constexpr StringType String;
 constexpr BooleanType Boolean;
-constexpr ColorType Color;
 constexpr ValueType Value;
 constexpr ObjectType Object;
 constexpr CollatorType Collator;
 constexpr FormattedType Formatted;
 constexpr ErrorType Error;
-constexpr ImageType Image;
 
 struct Array;
 
@@ -97,14 +82,12 @@ using Type = variant<NullType,
                      NumberType,
                      BooleanType,
                      StringType,
-                     ColorType,
                      ObjectType,
                      ValueType,
                      mapbox::util::recursive_wrapper<Array>,
                      CollatorType,
                      FormattedType,
-                     ErrorType,
-                     ImageType>;
+                     ErrorType>;
 
 struct Array {
     explicit Array(Type itemType_) : itemType(std::move(itemType_)) {}
