@@ -1,7 +1,7 @@
 #pragma once
 
-#include <mbgl/style_expression/optional.hpp>
-#include <mbgl/style_expression/variant.hpp>
+#include "optional.hpp"
+#include "variant.hpp"
 #include <vector>
 
 namespace mbgl {
@@ -53,27 +53,13 @@ struct ValueType {
     std::string getName() const { return "value"; }
     bool operator==(const ValueType&) const { return true; }
 };
-    
-struct CollatorType {
-    constexpr CollatorType() = default;
-    std::string getName() const { return "collator"; }
-    bool operator==(const CollatorType&) const { return true; }
-};
-    
-struct FormattedType {
-    constexpr FormattedType() = default;
-    std::string getName() const { return "formatted"; }
-    bool operator==(const FormattedType&) const { return true; }
-};
-
+ 
 constexpr NullType Null;
 constexpr NumberType Number;
 constexpr StringType String;
 constexpr BooleanType Boolean;
 constexpr ValueType Value;
 constexpr ObjectType Object;
-constexpr CollatorType Collator;
-constexpr FormattedType Formatted;
 constexpr ErrorType Error;
 
 struct Array;
@@ -85,8 +71,6 @@ using Type = variant<NullType,
                      ObjectType,
                      ValueType,
                      mapbox::util::recursive_wrapper<Array>,
-                     CollatorType,
-                     FormattedType,
                      ErrorType>;
 
 struct Array {
