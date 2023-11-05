@@ -222,8 +222,7 @@ ParseResult ParsingContext::parse(
     // it immediately and replace it with a literal value in the
     // parsed/compiled result. Expressions that expect an image should
     // not be resolved here so we can later get the available images.
-    if ((*parsed)->getKind() != Kind::Literal &&
-        (*parsed)->getType() != type::Image && isConstant(**parsed)) {
+    if ((*parsed)->getKind() != Kind::Literal && && isConstant(**parsed)) {
         EvaluationContext params(nullptr);
         EvaluationResult evaluated((*parsed)->evaluate(params));
         if (!evaluated) {

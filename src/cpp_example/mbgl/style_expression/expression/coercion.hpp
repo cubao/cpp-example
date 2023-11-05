@@ -26,8 +26,6 @@ class Coercion : public Expression
     void eachChild(
         const std::function<void(const Expression &)> &visit) const override;
 
-    mbgl::Value serialize() const override;
-
     bool operator==(const Expression &e) const override;
 
     std::vector<optional<Value>> possibleOutputs() const override;

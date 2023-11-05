@@ -143,18 +143,6 @@ std::unique_ptr<Expression> toString(std::unique_ptr<Expression> value,
     return coercion(type::String, std::move(value), std::move(def));
 }
 
-std::unique_ptr<Expression> toFormatted(std::unique_ptr<Expression> value,
-                                        std::unique_ptr<Expression> def)
-{
-    return coercion(type::Formatted, std::move(value), std::move(def));
-}
-
-std::unique_ptr<Expression> toImage(std::unique_ptr<Expression> value,
-                                    std::unique_ptr<Expression> def)
-{
-    return coercion(type::Image, std::move(value), std::move(def));
-}
-
 std::unique_ptr<Expression> get(const char *value)
 {
     return get(literal(value));
@@ -271,11 +259,6 @@ std::unique_ptr<Expression>
 concat(std::vector<std::unique_ptr<Expression>> inputs)
 {
     return compound("concat", std::move(inputs));
-}
-
-std::unique_ptr<Expression> image(std::unique_ptr<Expression> expression)
-{
-    return std::make_unique<ImageExpression>(std::move(expression));
 }
 
 } // namespace dsl

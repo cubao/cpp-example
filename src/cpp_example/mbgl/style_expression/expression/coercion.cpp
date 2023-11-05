@@ -14,7 +14,6 @@ EvaluationResult toBoolean(const Value &v)
                    [&](const std::string &s) { return s.length() > 0; },
                    [&](bool b) { return b; },
                    [&](const NullValue &) { return false; },
-                   [&](const Image &i) { return i.isAvailable(); },
                    [&](const auto &) { return true; });
 }
 
@@ -57,24 +56,6 @@ Coercion::Coercion(type::Type type_,
     }
 }
 
-mbgl::Value Coercion::serialize() const
-{
-    if (getType().is<type::FormattedType>()) {
-        // Since there's no explicit "to-formatted" coercion, the only coercions
-        // should be created by string expressions that get implicitly coerced
-        // to "formatted".
-        std::vector<mbgl::Value> serialized{{std::string("format")}};
-        serialized.push_back(inputs[0]->serialize());
-        serialized.emplace_back(std::unordered_map<std::string, mbgl::Value>());
-        return serialized;
-    } else if (getType().is<type::ImageType>()) {
-        return std::vector<mbgl::Value>{{std::string("image")},
-                                        inputs[0]->serialize()};
-    } else {
-        return Expression::serialize();
-    }
-};
-
 std::string Coercion::getOperator() const
 {
     return getType().match(
@@ -105,8 +86,7 @@ ParseResult Coercion::parse(const Convertible &value, ParsingContext &ctx)
     auto it = types.find(*toString(arrayMember(value, 0)));
     assert(it != types.end());
 
-    if ((it->second == type::Boolean || it->second == type::String ||
-         it->second == type::Formatted || it->second == type::Image) &&
+    if ((it->second == type::Boolean || it->second == type::String) &&
         length != 2) {
         ctx.error("Expected one argument.");
         return ParseResult();
