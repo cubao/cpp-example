@@ -19,7 +19,7 @@ class Assertion : public Expression
     Assertion(type::Type type_,
               std::vector<std::unique_ptr<Expression>> inputs_);
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &value,
+    static ParseResult parse(const Convertible &value,
                              ParsingContext &ctx);
 
     EvaluationResult evaluate(const EvaluationContext &params) const override;

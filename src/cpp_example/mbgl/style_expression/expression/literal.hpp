@@ -31,7 +31,7 @@ class Literal : public Expression
         return value;
     }
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &,
+    static ParseResult parse(const Convertible &,
                              ParsingContext &);
 
     void

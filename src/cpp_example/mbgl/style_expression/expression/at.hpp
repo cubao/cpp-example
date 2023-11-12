@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../expression.hpp"
+#include "../parsing_context.hpp"
 #include <memory>
 
 namespace mbgl
@@ -19,7 +20,7 @@ class At : public Expression
     {
     }
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &value,
+    static ParseResult parse(const Convertible &value,
                              ParsingContext &ctx);
 
     EvaluationResult evaluate(const EvaluationContext &params) const override;

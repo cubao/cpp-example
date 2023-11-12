@@ -88,7 +88,7 @@ Range<float> Step::getCoveringStops(const double lower,
     return ::mbgl::style::expression::getCoveringStops(stops, lower, upper);
 }
 
-ParseResult Step::parse(const mbgl::style::conversion::Convertible &value,
+ParseResult Step::parse(const Convertible &value,
                         ParsingContext &ctx)
 {
     assert(isArray(value));

@@ -25,7 +25,7 @@ class Let : public Expression
     {
     }
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &,
+    static ParseResult parse(const Convertible &,
                              ParsingContext &);
 
     EvaluationResult evaluate(const EvaluationContext &params) const override;
@@ -62,7 +62,7 @@ class Var : public Expression
     {
     }
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &,
+    static ParseResult parse(const Convertible &,
                              ParsingContext &);
 
     EvaluationResult evaluate(const EvaluationContext &params) const override;

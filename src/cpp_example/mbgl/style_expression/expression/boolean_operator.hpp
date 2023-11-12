@@ -19,7 +19,7 @@ class Any : public Expression
     {
     }
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &value,
+    static ParseResult parse(const Convertible &value,
                              ParsingContext &ctx);
 
     EvaluationResult evaluate(const EvaluationContext &params) const override;
@@ -42,7 +42,7 @@ class All : public Expression
     {
     }
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &value,
+    static ParseResult parse(const Convertible &value,
                              ParsingContext &ctx);
 
     EvaluationResult evaluate(const EvaluationContext &params) const override;

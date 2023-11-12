@@ -44,7 +44,6 @@ void At::eachChild(const std::function<void(const Expression &)> &visit) const
     visit(*input);
 }
 
-using namespace mbgl::style::conversion;
 ParseResult At::parse(const Convertible &value, ParsingContext &ctx)
 {
     assert(isArray(value));

@@ -34,7 +34,7 @@ class Step : public Expression
 
     std::vector<optional<Value>> possibleOutputs() const override;
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &value,
+    static ParseResult parse(const Convertible &value,
                              ParsingContext &ctx);
 
     mbgl::Value serialize() const override;

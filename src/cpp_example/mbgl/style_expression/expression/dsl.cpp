@@ -43,12 +43,12 @@ std::unique_ptr<Expression> createExpression(const char *expr)
     const JSValue *expression = &document;
     expression::ParsingContext ctx;
     expression::ParseResult parsed =
-        ctx.parseExpression(mbgl::style::conversion::Convertible(expression));
+        ctx.parseExpression(Convertible(expression));
     return parsed ? std::move(*parsed) : nullptr;
 }
 
 std::unique_ptr<Expression>
-createExpression(const mbgl::style::conversion::Convertible &expr)
+createExpression(const Convertible &expr)
 {
     expression::ParsingContext ctx;
     expression::ParseResult parsed = ctx.parseExpression(expr);

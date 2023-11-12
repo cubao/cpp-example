@@ -17,7 +17,7 @@ namespace style
 namespace expression
 {
 
-ParseResult parseInterpolate(const mbgl::style::conversion::Convertible &value,
+ParseResult parseInterpolate(const Convertible &value,
                              ParsingContext &ctx);
 
 class Interpolate : public Expression

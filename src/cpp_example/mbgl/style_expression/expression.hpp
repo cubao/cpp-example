@@ -6,6 +6,7 @@
 #include "optional.hpp"
 #include "variant.hpp"
 #include "feature.hpp"
+#include "parsing_context.hpp"
 
 #include <functional>
 #include <array>
@@ -25,6 +26,79 @@ class EvaluationError
   public:
     std::string message;
 };
+
+using EvaluationContext = mapbox::geojson::feature;
+using Convertible = mapbox::geojson::value;
+struct Error { std::string message; };
+
+inline bool isUndefined(const Convertible& v) {
+    return v.is<mapbox::geojson::null_value_t>();
+}
+
+inline bool isArray(const Convertible& v) {
+    return v.is<mapbox::geojson::value::array_type>();
+}
+
+inline std::size_t arrayLength(const Convertible& v) {
+    return v.get<mapbox::geojson::value::array_type>().size();
+}
+
+inline Convertible arrayMember(const Convertible& v, std::size_t i) {
+    return v.get<mapbox::geojson::value::array_type>()[i];
+}
+
+inline bool isObject(const Convertible& v) {
+    return v.is<mapbox::geojson::value::object_type>();
+}
+
+inline optional<Convertible> objectMember(const Convertible& v, const char * name) {
+    auto &obj = v.get<mapbox::geojson::value::object_type>();
+    auto itr = obj.find(name);
+    if (itr == obj.end()) {
+        return {};
+    } else {
+        return itr->second;
+    }
+}
+
+    inline optional<Error> eachMember(const Convertible& v, const std::function<optional<Error> (const std::string&, const Convertible&)>& fn) {
+        return {};
+    }
+
+    inline optional<bool> toBool(const Convertible& v) {
+        if (!v.is<bool>()) {
+            return {};
+        }
+        return v.get<bool>();
+    }
+
+    inline optional<double> toDouble(const Convertible& v) {
+        if (!v.is<double>()) {
+            return {};
+        }
+        return v.get<double>();
+    }
+
+    inline optional<float> toNumber(const Convertible& v) {
+        auto d = toDouble(v);
+        if (!d) {
+            return {};
+        }
+        return static_cast<float>(*d);
+    }
+
+    inline optional<std::string> toString(const Convertible& v) {
+        if (!v.is<std::string>()) {
+            return {};
+        }
+        return v.get<std::string>();
+    }
+
+    inline optional<Value> toValue(const Convertible& v) {
+        assert(v.vtable);
+        return v.vtable->toValue(v.storage);
+    }
+
 
 template <typename T> class Result : private variant<EvaluationError, T>
 {
@@ -144,7 +218,7 @@ class Expression
     Kind getKind() const { return kind; };
     type::Type getType() const { return type; };
 
-    EvaluationResult evaluate(const Feature &feature) const;
+    virtual EvaluationResult evaluate(const EvaluationContext &feature) const;
 
     /**
      * Statically analyze the expression, attempting to enumerate possible

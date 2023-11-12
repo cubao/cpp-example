@@ -43,7 +43,7 @@ template <typename T> class Match : public Expression
     std::unique_ptr<Expression> otherwise;
 };
 
-ParseResult parseMatch(const mbgl::style::conversion::Convertible &value,
+ParseResult parseMatch(const Convertible &value,
                        ParsingContext &ctx);
 
 } // namespace expression

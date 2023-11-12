@@ -55,7 +55,7 @@ class CompoundExpression : public Expression
 
 ParseResult
 parseCompoundExpression(const std::string &name,
-                        const mbgl::style::conversion::Convertible &value,
+                        const Convertible &value,
                         ParsingContext &ctx);
 
 ParseResult

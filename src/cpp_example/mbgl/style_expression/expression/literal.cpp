@@ -27,7 +27,7 @@ optional<Value> parseValue(const Convertible &value, ParsingContext &ctx)
         bool error = false;
         eachMember(value,
                    [&](const std::string &k,
-                       const mbgl::style::conversion::Convertible &v)
+                       const Convertible &v)
                        -> optional<conversion::Error> {
                        if (!error) {
                            optional<Value> memberValue = parseValue(v, ctx);

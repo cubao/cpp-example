@@ -12,7 +12,7 @@ namespace style
 namespace expression
 {
 
-ParseResult parseComparison(const mbgl::style::conversion::Convertible &,
+ParseResult parseComparison(const Convertible &,
                             ParsingContext &);
 
 class BasicComparison : public Expression

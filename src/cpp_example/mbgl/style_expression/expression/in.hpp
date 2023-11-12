@@ -17,7 +17,7 @@ class In final : public Expression
     In(std::unique_ptr<Expression> needle_,
        std::unique_ptr<Expression> haystack_);
 
-    static ParseResult parse(const mbgl::style::conversion::Convertible &value,
+    static ParseResult parse(const Convertible &value,
                              ParsingContext &ctx);
 
     EvaluationResult evaluate(const EvaluationContext &params) const override;

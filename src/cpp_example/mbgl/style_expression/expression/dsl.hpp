@@ -32,7 +32,7 @@ std::vector<std::unique_ptr<Expression>> vec(Args... args)
 
 std::unique_ptr<Expression> createExpression(const char *expr);
 std::unique_ptr<Expression>
-createExpression(const mbgl::style::conversion::Convertible &expr);
+createExpression(const Convertible &expr);
 std::unique_ptr<Expression> error(std::string);
 
 std::unique_ptr<Expression> literal(const char *value);
