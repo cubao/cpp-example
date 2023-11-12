@@ -49,29 +49,30 @@ std::string toString(const Value &value)
 void writeJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer,
                const Value &value)
 {
-    value.match([&](const NullValue &) { writer.Null(); },
-                [&](bool b) { writer.Bool(b); },
-                [&](double f) {
-                    // make sure integer values are stringified without trailing
-                    // ".0".
-                    f == std::floor(f) ? writer.Int(f) : writer.Double(f);
-                },
-                [&](const std::string &s) { writer.String(s); },
-                [&](const std::vector<Value> &arr) {
-                    writer.StartArray();
-                    for (const auto &item : arr) {
-                        writeJSON(writer, item);
-                    }
-                    writer.EndArray();
-                },
-                [&](const std::unordered_map<std::string, Value> &obj) {
-                    writer.StartObject();
-                    for (const auto &entry : obj) {
-                        writer.Key(entry.first.c_str());
-                        writeJSON(writer, entry.second);
-                    }
-                    writer.EndObject();
-                });
+    value.match(
+        [&](const NullValue &) { writer.Null(); },
+        [&](bool b) { writer.Bool(b); },
+        [&](double f) {
+            // make sure integer values are stringified without trailing
+            // ".0".
+            f == std::floor(f) ? writer.Int(f) : writer.Double(f);
+        },
+        [&](const std::string &s) { writer.String(s.data(), s.size()); },
+        [&](const std::vector<Value> &arr) {
+            writer.StartArray();
+            for (const auto &item : arr) {
+                writeJSON(writer, item);
+            }
+            writer.EndArray();
+        },
+        [&](const std::unordered_map<std::string, Value> &obj) {
+            writer.StartObject();
+            for (const auto &entry : obj) {
+                writer.Key(entry.first.c_str());
+                writeJSON(writer, entry.second);
+            }
+            writer.EndObject();
+        });
 }
 
 std::string stringify(const Value &value)
